@@ -1,0 +1,334 @@
+<?xml version="1.0" ?>
+<robot name="full_body" xmlns:xacro="http://www.ros.org/wiki/xacro" >
+
+<transmission name="base to neck yaw_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="base to neck yaw">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="base to neck yaw_actr">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<transmission name="neck to torso Pitch_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="neck to torso Pitch">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="neck to torso Pitch_actr">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<transmission name="torso to LA1 Shoulder Pitch_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="torso to LA1 Shoulder Pitch">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="torso to LA1 Shoulder Pitch_actr">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<transmission name="LA2 Shoulder to LA3 Upper Arm Yaw_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="LA2 Shoulder to LA3 Upper Arm Yaw">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="LA2 Shoulder to LA3 Upper Arm Yaw_actr">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<transmission name="LA3 Upper Arm to LA4 Lower Arm Pitch_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="LA3 Upper Arm to LA4 Lower Arm Pitch">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="LA3 Upper Arm to LA4 Lower Arm Pitch_actr">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<transmission name="LA4 Lower Arm to LA5 Wrist Yaw_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="LA4 Lower Arm to LA5 Wrist Yaw">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="LA4 Lower Arm to LA5 Wrist Yaw_actr">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<transmission name="LA5 Wrist to LA6 Wrist Pitch_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="LA5 Wrist to LA6 Wrist Pitch">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="LA5 Wrist to LA6 Wrist Pitch_actr">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<transmission name="LA6 Wrist to LA7 Hand Roll_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="LA6 Wrist to LA7 Hand Roll">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="LA6 Wrist to LA7 Hand Roll_actr">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<transmission name="torso to RA1 Shoulder Pitch_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="torso to RA1 Shoulder Pitch">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="torso to RA1 Shoulder Pitch_actr">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<transmission name="RA1 Shoulder to RA2 Shoulder Roll _tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="RA1 Shoulder to RA2 Shoulder Roll ">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="RA1 Shoulder to RA2 Shoulder Roll _actr">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<transmission name="LA1 Shoulder to LA2 Shoulder Roll_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="LA1 Shoulder to LA2 Shoulder Roll">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="LA1 Shoulder to LA2 Shoulder Roll_actr">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<transmission name="RA2 Shoulder to RA3 Upper Arm Yaw_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="RA2 Shoulder to RA3 Upper Arm Yaw">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="RA2 Shoulder to RA3 Upper Arm Yaw_actr">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<transmission name="RA3 Upper Arm to RA4 Lower Arm Pitch _tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="RA3 Upper Arm to RA4 Lower Arm Pitch ">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="RA3 Upper Arm to RA4 Lower Arm Pitch _actr">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<transmission name="RA4 Lower Arm to RA5 Wrist Yaw_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="RA4 Lower Arm to RA5 Wrist Yaw">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="RA4 Lower Arm to RA5 Wrist Yaw_actr">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<transmission name="RA5 Wrist to RA6 Wrist Pitch_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="RA5 Wrist to RA6 Wrist Pitch">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="RA5 Wrist to RA6 Wrist Pitch_actr">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<transmission name="RA6 Wrist to RA7 Hand Roll_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="RA6 Wrist to RA7 Hand Roll">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="RA6 Wrist to RA7 Hand Roll_actr">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<transmission name="torso to abdomen Yaw_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="torso to abdomen Yaw">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="torso to abdomen Yaw_actr">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<transmission name="abdomen to hip Pitch_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="abdomen to hip Pitch">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="abdomen to hip Pitch_actr">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<transmission name="hip to RL1 Groin Yaw_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="hip to RL1 Groin Yaw">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="hip to RL1 Groin Yaw_actr">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<transmission name="RL1 Groin to RL2 Buttock Pitch_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="RL1 Groin to RL2 Buttock Pitch">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="RL1 Groin to RL2 Buttock Pitch_actr">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<transmission name="RL2 Buttock to RL3 Thigh Roll_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="RL2 Buttock to RL3 Thigh Roll">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="RL2 Buttock to RL3 Thigh Roll_actr">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<transmission name="RL3 Thigh to RL4 Calf Pitch_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="RL3 Thigh to RL4 Calf Pitch">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="RL3 Thigh to RL4 Calf Pitch_actr">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<transmission name="RL4 Calf to RL5 ankle Pitch_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="RL4 Calf to RL5 ankle Pitch">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="RL4 Calf to RL5 ankle Pitch_actr">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<transmission name="RL5 ankle to RL6 Foot Roll_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="RL5 ankle to RL6 Foot Roll">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="RL5 ankle to RL6 Foot Roll_actr">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<transmission name="hip to LL1 Groin Yaw_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="hip to LL1 Groin Yaw">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="hip to LL1 Groin Yaw_actr">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<transmission name="LL1 Groin to LL2 Buttock Pitch_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="LL1 Groin to LL2 Buttock Pitch">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="LL1 Groin to LL2 Buttock Pitch_actr">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<transmission name="LL2 Buttock to LL3 Thigh Roll_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="LL2 Buttock to LL3 Thigh Roll">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="LL2 Buttock to LL3 Thigh Roll_actr">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<transmission name="LL3 Thigh to LL4 Calf Pitch_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="LL3 Thigh to LL4 Calf Pitch">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="LL3 Thigh to LL4 Calf Pitch_actr">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<transmission name="LL4 Calf to LL5 ankle Pitch_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="LL4 Calf to LL5 ankle Pitch">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="LL4 Calf to LL5 ankle Pitch_actr">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<transmission name="LL5 ankle to LL6 Foot Roll_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="LL5 ankle to LL6 Foot Roll">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="LL5 ankle to LL6 Foot Roll_actr">
+    <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+</robot>

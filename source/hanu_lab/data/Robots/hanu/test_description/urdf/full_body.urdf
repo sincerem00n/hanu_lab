@@ -1,0 +1,1419 @@
+<?xml version="1.0" ?>
+<robot name="full_body">
+  <material name="silver">
+    <color rgba="0.700 0.700 0.700 1.000"/>
+  </material>
+  <transmission name="base to neck yaw_tran">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="base to neck yaw">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="base to neck yaw_actr">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="neck to torso Pitch_tran">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="neck to torso Pitch">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="neck to torso Pitch_actr">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="torso to LA1 Shoulder Pitch_tran">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="torso to LA1 Shoulder Pitch">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="torso to LA1 Shoulder Pitch_actr">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="LA2 Shoulder to LA3 Upper Arm Yaw_tran">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="LA2 Shoulder to LA3 Upper Arm Yaw">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="LA2 Shoulder to LA3 Upper Arm Yaw_actr">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="LA3 Upper Arm to LA4 Lower Arm Pitch_tran">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="LA3 Upper Arm to LA4 Lower Arm Pitch">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="LA3 Upper Arm to LA4 Lower Arm Pitch_actr">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="LA4 Lower Arm to LA5 Wrist Yaw_tran">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="LA4 Lower Arm to LA5 Wrist Yaw">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="LA4 Lower Arm to LA5 Wrist Yaw_actr">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="LA5 Wrist to LA6 Wrist Pitch_tran">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="LA5 Wrist to LA6 Wrist Pitch">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="LA5 Wrist to LA6 Wrist Pitch_actr">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="LA6 Wrist to LA7 Hand Roll_tran">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="LA6 Wrist to LA7 Hand Roll">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="LA6 Wrist to LA7 Hand Roll_actr">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="torso to RA1 Shoulder Pitch_tran">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="torso to RA1 Shoulder Pitch">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="torso to RA1 Shoulder Pitch_actr">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="RA1 Shoulder to RA2 Shoulder Roll _tran">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="RA1 Shoulder to RA2 Shoulder Roll ">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="RA1 Shoulder to RA2 Shoulder Roll _actr">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="LA1 Shoulder to LA2 Shoulder Roll_tran">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="LA1 Shoulder to LA2 Shoulder Roll">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="LA1 Shoulder to LA2 Shoulder Roll_actr">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="RA2 Shoulder to RA3 Upper Arm Yaw_tran">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="RA2 Shoulder to RA3 Upper Arm Yaw">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="RA2 Shoulder to RA3 Upper Arm Yaw_actr">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="RA3 Upper Arm to RA4 Lower Arm Pitch _tran">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="RA3 Upper Arm to RA4 Lower Arm Pitch ">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="RA3 Upper Arm to RA4 Lower Arm Pitch _actr">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="RA4 Lower Arm to RA5 Wrist Yaw_tran">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="RA4 Lower Arm to RA5 Wrist Yaw">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="RA4 Lower Arm to RA5 Wrist Yaw_actr">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="RA5 Wrist to RA6 Wrist Pitch_tran">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="RA5 Wrist to RA6 Wrist Pitch">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="RA5 Wrist to RA6 Wrist Pitch_actr">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="RA6 Wrist to RA7 Hand Roll_tran">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="RA6 Wrist to RA7 Hand Roll">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="RA6 Wrist to RA7 Hand Roll_actr">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="torso to abdomen Yaw_tran">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="torso to abdomen Yaw">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="torso to abdomen Yaw_actr">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="abdomen to hip Pitch_tran">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="abdomen to hip Pitch">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="abdomen to hip Pitch_actr">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="hip to RL1 Groin Yaw_tran">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="hip to RL1 Groin Yaw">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="hip to RL1 Groin Yaw_actr">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="RL1 Groin to RL2 Buttock Pitch_tran">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="RL1 Groin to RL2 Buttock Pitch">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="RL1 Groin to RL2 Buttock Pitch_actr">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="RL2 Buttock to RL3 Thigh Roll_tran">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="RL2 Buttock to RL3 Thigh Roll">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="RL2 Buttock to RL3 Thigh Roll_actr">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="RL3 Thigh to RL4 Calf Pitch_tran">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="RL3 Thigh to RL4 Calf Pitch">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="RL3 Thigh to RL4 Calf Pitch_actr">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="RL4 Calf to RL5 ankle Pitch_tran">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="RL4 Calf to RL5 ankle Pitch">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="RL4 Calf to RL5 ankle Pitch_actr">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="RL5 ankle to RL6 Foot Roll_tran">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="RL5 ankle to RL6 Foot Roll">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="RL5 ankle to RL6 Foot Roll_actr">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="hip to LL1 Groin Yaw_tran">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="hip to LL1 Groin Yaw">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="hip to LL1 Groin Yaw_actr">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="LL1 Groin to LL2 Buttock Pitch_tran">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="LL1 Groin to LL2 Buttock Pitch">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="LL1 Groin to LL2 Buttock Pitch_actr">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="LL2 Buttock to LL3 Thigh Roll_tran">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="LL2 Buttock to LL3 Thigh Roll">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="LL2 Buttock to LL3 Thigh Roll_actr">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="LL3 Thigh to LL4 Calf Pitch_tran">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="LL3 Thigh to LL4 Calf Pitch">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="LL3 Thigh to LL4 Calf Pitch_actr">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="LL4 Calf to LL5 ankle Pitch_tran">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="LL4 Calf to LL5 ankle Pitch">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="LL4 Calf to LL5 ankle Pitch_actr">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="LL5 ankle to LL6 Foot Roll_tran">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="LL5 ankle to LL6 Foot Roll">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="LL5 ankle to LL6 Foot Roll_actr">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <gazebo>
+    <plugin filename="libgazebo_ros_control.so" name="control"/>
+  </gazebo>
+  <gazebo reference="base_link">
+    <material>Gazebo/Silver</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+    <gravity>true</gravity>
+  </gazebo>
+  <gazebo reference="Neck_1">
+    <material>Gazebo/Silver</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+  <gazebo reference="Torso_1">
+    <material>Gazebo/Silver</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+  <gazebo reference="fixed_E1R_1">
+    <material>Gazebo/Silver</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+  <gazebo reference="fixed_mid_360_1">
+    <material>Gazebo/Silver</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+  <gazebo reference="fixed_imu_1">
+    <material>Gazebo/Silver</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+  <gazebo reference="LA1_Shoulder_Pitch_1">
+    <material>Gazebo/Silver</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+  <gazebo reference="LA3_Upper_Arm_Yaw_1">
+    <material>Gazebo/Silver</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+  <gazebo reference="LA4_Lower_Arm_Pitch_1">
+    <material>Gazebo/Silver</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+  <gazebo reference="LA5_Wrist_Yaw_1">
+    <material>Gazebo/Silver</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+  <gazebo reference="LA6_Wrist_Pitch_1">
+    <material>Gazebo/Silver</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+  <gazebo reference="LA7_Hand_Roll_1">
+    <material>Gazebo/Silver</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+  <gazebo reference="RA1_Shoulder_Pitch_1">
+    <material>Gazebo/Silver</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+  <gazebo reference="RA2_Shoulder_Roll_1">
+    <material>Gazebo/Silver</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+  <gazebo reference="LA2_Shoulder_Roll_1">
+    <material>Gazebo/Silver</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+  <gazebo reference="RA3_Upper_Arm_Yaw_1">
+    <material>Gazebo/Silver</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+  <gazebo reference="RA4_Lower_Arm_Pitch_1">
+    <material>Gazebo/Silver</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+  <gazebo reference="RA5_Wrist_Yaw_1">
+    <material>Gazebo/Silver</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+  <gazebo reference="RA6_Wrist_Pitch_1">
+    <material>Gazebo/Silver</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+  <gazebo reference="RA7_Hand_Roll_1">
+    <material>Gazebo/Silver</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+  <gazebo reference="abdomen_1">
+    <material>Gazebo/Silver</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+  <gazebo reference="Hip_1">
+    <material>Gazebo/Silver</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+  <gazebo reference="RL1_Groin_Yaw_1">
+    <material>Gazebo/Silver</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+  <gazebo reference="RL2_Buttock_Pitch_1">
+    <material>Gazebo/Silver</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+  <gazebo reference="RL3_Thigh_Roll_1">
+    <material>Gazebo/Silver</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+  <gazebo reference="RL4_Calf_Pitch_1">
+    <material>Gazebo/Silver</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+  <gazebo reference="RL5_ankle_Pitch_1">
+    <material>Gazebo/Silver</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+  <gazebo reference="RL6_Foot_Roll_1">
+    <material>Gazebo/Silver</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+  <gazebo reference="LL1_Groin_Yaw_1">
+    <material>Gazebo/Silver</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+  <gazebo reference="LL2_Buttock_Pitch_1">
+    <material>Gazebo/Silver</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+  <gazebo reference="LL3_Thigh_Roll_1">
+    <material>Gazebo/Silver</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+  <gazebo reference="LL4_Calf_Pitch_1">
+    <material>Gazebo/Silver</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+  <gazebo reference="LL5_ankle_Pitch_1">
+    <material>Gazebo/Silver</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+  <gazebo reference="LL6_Foot_Roll_1">
+    <material>Gazebo/Silver</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>true</self_collide>
+  </gazebo>
+  <link name="base_link">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0.0001421940894087523 -0.012205570193922845 0.6228895552119521"/>
+      <mass value="1.4716765463609223"/>
+      <inertia ixx="0.006844" ixy="1.1e-05" ixz="-1.2e-05" iyy="0.006952" iyz="0.000162" izz="0.004003"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/base_link.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/base_link.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="Neck_1">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0.006352932028333235 -0.00432800591388478 -0.04802520359865814"/>
+      <mass value="0.5006062996867899"/>
+      <inertia ixx="0.000602" ixy="-1.4e-05" ixz="0.000108" iyy="0.000714" iyz="-5.9e-05" izz="0.000434"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0.0 -0.02 -0.546897"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/Neck_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0.0 -0.02 -0.546897"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/Neck_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="Torso_1">
+    <inertial>
+      <origin rpy="0 0 0" xyz="4.122484017056339e-05 0.05302693416250155 -0.17835100922705693"/>
+      <mass value="13.621877240801465"/>
+      <inertia ixx="0.185366" ixy="3e-05" ixz="-8.5e-05" iyy="0.223998" iyz="0.014733" izz="0.113687"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0.0 -0.02 -0.465"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/Torso_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0.0 -0.02 -0.465"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/Torso_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="fixed_E1R_1">
+    <inertial>
+      <origin rpy="0 0 0" xyz="-2.794535655342044e-06 0.02077490439880321 -0.005838396063687412"/>
+      <mass value="0.32995847541235246"/>
+      <inertia ixx="0.000157" ixy="0.0" ixz="-0.0" iyy="0.000316" iyz="9e-06" izz="0.000234"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="-0.0 0.085408 -0.388068"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/fixed_E1R_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="-0.0 0.085408 -0.388068"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/fixed_E1R_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="fixed_mid_360_1">
+    <inertial>
+      <origin rpy="0 0 0" xyz="-5.3347708959416494e-11 0.0214606472879659 -0.032269082867420085"/>
+      <mass value="0.2649595380785873"/>
+      <inertia ixx="0.000129" ixy="-0.0" ixz="0.0" iyy="0.000148" iyz="0.0" izz="0.000129"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0.0 -0.14412 -0.422763"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/fixed_mid_360_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0.0 -0.14412 -0.422763"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/fixed_mid_360_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="fixed_imu_1">
+    <inertial>
+      <origin rpy="0 0 0" xyz="3.9157773860144635e-07 -0.006579981459600024 -0.005242833697069224"/>
+      <mass value="0.015000001275798345"/>
+      <inertia ixx="2e-06" ixy="-0.0" ixz="-0.0" iyy="1e-06" iyz="-0.0" izz="2e-06"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="-0.0 4e-05 -0.115"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/fixed_imu_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="-0.0 4e-05 -0.115"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/fixed_imu_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="LA1_Shoulder_Pitch_1">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0.05096607311254445 0.006547318024281584 -0.003544307835871119"/>
+      <mass value="1.242543272854955"/>
+      <inertia ixx="0.001146" ixy="-7.3e-05" ixz="3.2e-05" iyy="0.002099" iyz="1.3e-05" izz="0.001705"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="-0.1645 0.0 -0.41"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/LA1_Shoulder_Pitch_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="-0.1645 0.0 -0.41"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/LA1_Shoulder_Pitch_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="LA3_Upper_Arm_Yaw_1">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0.0008354906621138025 -0.00026243719217534326 -0.1834410120920786"/>
+      <mass value="1.233533009922799"/>
+      <inertia ixx="0.007725" ixy="-9e-06" ixz="3.8e-05" iyy="0.007307" iyz="-1.2e-05" izz="0.001065"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="-0.226 -0.003581 -0.29734"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/LA3_Upper_Arm_Yaw_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="-0.226 -0.003581 -0.29734"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/LA3_Upper_Arm_Yaw_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="LA4_Lower_Arm_Pitch_1">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0.03168243928681741 -0.000444290644573752 -0.05357562894987665"/>
+      <mass value="0.3350700369673275"/>
+      <inertia ixx="0.000605" ixy="-1e-06" ixz="-3e-06" iyy="0.000717" iyz="-5e-06" izz="0.00029"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="-0.194 -0.003581 -0.07684"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/LA4_Lower_Arm_Pitch_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="-0.194 -0.003581 -0.07684"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/LA4_Lower_Arm_Pitch_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="LA5_Wrist_Yaw_1">
+    <inertial>
+      <origin rpy="0 0 0" xyz="-0.0007442448795181023 7.929230282576697e-05 -0.09081916119215508"/>
+      <mass value="0.5869661330234505"/>
+      <inertia ixx="0.003043" ixy="-5e-06" ixz="-2.7e-05" iyy="0.003121" iyz="4e-06" izz="0.000368"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="-0.225431 -0.002858 0.030661"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/LA5_Wrist_Yaw_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="-0.225431 -0.002858 0.030661"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/LA5_Wrist_Yaw_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="LA6_Wrist_Pitch_1">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0.03822554279053031 0.0016073634071218337 -0.04173436152221793"/>
+      <mass value="0.309934144597604"/>
+      <inertia ixx="0.00032" ixy="2e-06" ixz="-6.7e-05" iyy="0.000456" iyz="1e-05" izz="0.00023"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="-0.19149 -0.003865 0.178782"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/LA6_Wrist_Pitch_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="-0.19149 -0.003865 0.178782"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/LA6_Wrist_Pitch_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="LA7_Hand_Roll_1">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0.0009188552709128994 0.01769292977980838 -0.09644917602002939"/>
+      <mass value="1.3063207369617058"/>
+      <inertia ixx="0.001871" ixy="-1e-06" ixz="1e-05" iyy="0.001875" iyz="6.4e-05" izz="0.000793"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="-0.224295 0.016162 0.237763"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/LA7_Hand_Roll_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="-0.224295 0.016162 0.237763"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/LA7_Hand_Roll_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="RA1_Shoulder_Pitch_1">
+    <inertial>
+      <origin rpy="0 0 0" xyz="-0.05096607311254078 0.0065473180242818264 -0.0035443078358716185"/>
+      <mass value="1.2425432728549557"/>
+      <inertia ixx="0.001146" ixy="7.3e-05" ixz="-3.2e-05" iyy="0.002099" iyz="1.3e-05" izz="0.001705"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0.1645 0.0 -0.41"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/RA1_Shoulder_Pitch_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0.1645 0.0 -0.41"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/RA1_Shoulder_Pitch_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="RA2_Shoulder_Roll_1">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0.0003755941180846323 -0.03236178362771934 -0.06776439992004135"/>
+      <mass value="0.6974775014325576"/>
+      <inertia ixx="0.001226" ixy="0.0" ixz="-0.0" iyy="0.001032" iyz="1.4e-05" izz="0.000696"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0.226 -0.035581 -0.40634"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/RA2_Shoulder_Roll_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0.226 -0.035581 -0.40634"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/RA2_Shoulder_Roll_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="LA2_Shoulder_Roll_1">
+    <inertial>
+      <origin rpy="0 0 0" xyz="-0.000375595554657715 -0.032361783390667136 -0.06776440020746693"/>
+      <mass value="0.6974774502785895"/>
+      <inertia ixx="0.001226" ixy="-0.0" ixz="0.0" iyy="0.001032" iyz="1.4e-05" izz="0.000696"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="-0.226 -0.035581 -0.40634"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/LA2_Shoulder_Roll_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="-0.226 -0.035581 -0.40634"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/LA2_Shoulder_Roll_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="RA3_Upper_Arm_Yaw_1">
+    <inertial>
+      <origin rpy="0 0 0" xyz="-0.0008354906621144409 -0.0002624371921753658 -0.183641012092079"/>
+      <mass value="1.233533009922799"/>
+      <inertia ixx="0.007725" ixy="9e-06" ixz="-3.8e-05" iyy="0.007307" iyz="-1.2e-05" izz="0.001065"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0.226 -0.003581 -0.29734"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/RA3_Upper_Arm_Yaw_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0.226 -0.003581 -0.29734"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/RA3_Upper_Arm_Yaw_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="RA4_Lower_Arm_Pitch_1">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0.023558560716739008 -0.0007444392225717626 -0.053561202576039565"/>
+      <mass value="0.33507008724493925"/>
+      <inertia ixx="0.000605" ixy="1e-06" ixz="3e-06" iyy="0.000717" iyz="-5e-06" izz="0.00029"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0.249 -0.003581 -0.07664"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/RA4_Lower_Arm_Pitch_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0.249 -0.003581 -0.07664"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/RA4_Lower_Arm_Pitch_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="RA5_Wrist_Yaw_1">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0.0007442443281727162 7.914345498181118e-05 -0.09081873007591672"/>
+      <mass value="0.5869661330234299"/>
+      <inertia ixx="0.003043" ixy="5e-06" ixz="2.7e-05" iyy="0.003121" iyz="4e-06" izz="0.000368"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0.22519 -0.002558 0.030347"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/RA5_Wrist_Yaw_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0.22519 -0.002558 0.030347"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/RA5_Wrist_Yaw_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="RA6_Wrist_Pitch_1">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0.024774456658106264 0.001607214559262753 -0.041734930405975285"/>
+      <mass value="0.3099341445976141"/>
+      <inertia ixx="0.00032" ixy="-2e-06" ixz="6.7e-05" iyy="0.000456" iyz="1e-05" izz="0.00023"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0.253749 -0.003565 0.178467"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/RA6_Wrist_Pitch_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0.253749 -0.003565 0.178467"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/RA6_Wrist_Pitch_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="RA7_Hand_Roll_1">
+    <inertial>
+      <origin rpy="0 0 0" xyz="-0.0009188558222877341 0.018992780931948772 -0.09644874490378666"/>
+      <mass value="1.3063207369617063"/>
+      <inertia ixx="0.001871" ixy="1e-06" ixz="-1e-05" iyy="0.001875" iyz="6.4e-05" izz="0.000793"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0.223554 0.016462 0.237449"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/RA7_Hand_Roll_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0.223554 0.016462 0.237449"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/RA7_Hand_Roll_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="abdomen_1">
+    <inertial>
+      <origin rpy="0 0 0" xyz="1.7609968749525214e-06 -0.00036874351384039394 -0.039917878266837015"/>
+      <mass value="1.5437329115361254"/>
+      <inertia ixx="0.003093" ixy="0.0" ixz="0.0" iyy="0.005406" iyz="3e-06" izz="0.005419"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="-0.0 4e-05 -0.11"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/abdomen_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="-0.0 4e-05 -0.11"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/abdomen_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="Hip_1">
+    <inertial>
+      <origin rpy="0 0 0" xyz="2.940069733033495e-14 0.00027652123939379 -0.03664548067775503"/>
+      <mass value="5.721991599958218"/>
+      <inertia ixx="0.015838" ixy="-0.0" ixz="-0.0" iyy="0.034738" iyz="4.8e-05" izz="0.026356"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="-0.0 4e-05 -0.0005"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/Hip_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="-0.0 4e-05 -0.0005"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/Hip_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="RL1_Groin_Yaw_1">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0.018484539868193033 1.5473609421685593e-07 -0.07310202524186592"/>
+      <mass value="1.372582443764474"/>
+      <inertia ixx="0.003578" ixy="0.0" ixz="0.000105" iyy="0.002487" iyz="-0.0" izz="0.001798"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0.08 -8.9e-05 0.116517"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/RL1_Groin_Yaw_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0.08 -8.9e-05 0.116517"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/RL1_Groin_Yaw_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="RL2_Buttock_Pitch_1">
+    <inertial>
+      <origin rpy="0 0 0" xyz="-0.0525698186765753 0.006267981937054494 5.7055247485809923e-05"/>
+      <mass value="1.2030908442391726"/>
+      <inertia ixx="0.001516" ixy="0.000131" ixz="2e-06" iyy="0.003019" iyz="-1e-06" izz="0.00244"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0.084 -8.9e-05 0.198817"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/RL2_Buttock_Pitch_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0.084 -8.9e-05 0.198817"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/RL2_Buttock_Pitch_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="RL3_Thigh_Roll_1">
+    <inertial>
+      <origin rpy="0 0 0" xyz="-0.001898190227483415 0.019583519640866007 -0.12831389300994625"/>
+      <mass value="1.3008191688294264"/>
+      <inertia ixx="0.015962" ixy="3e-06" ixz="-0.000543" iyy="0.015855" iyz="0.000687" izz="0.0032"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0.1533 0.022361 0.198817"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/RL3_Thigh_Roll_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0.1533 0.022361 0.198817"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/RL3_Thigh_Roll_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="RL4_Calf_Pitch_1">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0.020130236176563482 -0.006847617919304644 -0.09907530299934697"/>
+      <mass value="3.5208608671958554"/>
+      <inertia ixx="0.041823" ixy="-6.3e-05" ixz="0.002532" iyy="0.040863" iyz="-0.000668" izz="0.00575"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0.17055 0.000211 0.476908"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/RL4_Calf_Pitch_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0.17055 0.000211 0.476908"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/RL4_Calf_Pitch_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="RL5_ankle_Pitch_1">
+    <inertial>
+      <origin rpy="0 0 0" xyz="1.7861697889587358e-05 -1.759852130179141e-05 -3.698215489400525e-08"/>
+      <mass value="0.5674125008270691"/>
+      <inertia ixx="0.000232" ixy="0.0" ixz="-0.0" iyy="0.000232" iyz="0.0" izz="0.000417"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0.1523 0.000211 0.806908"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/RL5_ankle_Pitch_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0.1523 0.000211 0.806908"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/RL5_ankle_Pitch_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="RL6_Foot_Roll_1">
+    <inertial>
+      <origin rpy="0 0 0" xyz="5.934296221088431e-08 0.03617483681600632 -0.08674591848712465"/>
+      <mass value="1.9542439533034301"/>
+      <inertia ixx="0.004119" ixy="2e-06" ixz="1e-06" iyy="0.002093" iyz="-0.000615" izz="0.00392"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0.1523 0.041211 0.806908"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/RL6_Foot_Roll_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0.1523 0.041211 0.806908"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/RL6_Foot_Roll_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="LL1_Groin_Yaw_1">
+    <inertial>
+      <origin rpy="0 0 0" xyz="-0.018484550160689353 1.5479671152930858e-07 -0.07310203018807458"/>
+      <mass value="1.3725831866883502"/>
+      <inertia ixx="0.003578" ixy="-0.0" ixz="-0.000105" iyy="0.002487" iyz="-0.0" izz="0.001798"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="-0.08 -8.9e-05 0.116517"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/LL1_Groin_Yaw_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="-0.08 -8.9e-05 0.116517"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/LL1_Groin_Yaw_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="LL2_Buttock_Pitch_1">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0.05256981867666273 0.006267981937056091 5.705524702331877e-05"/>
+      <mass value="1.2030908442391786"/>
+      <inertia ixx="0.001516" ixy="-0.000131" ixz="-2e-06" iyy="0.003019" iyz="-1e-06" izz="0.00244"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="-0.084 -8.9e-05 0.198817"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/LL2_Buttock_Pitch_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="-0.084 -8.9e-05 0.198817"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/LL2_Buttock_Pitch_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="LL3_Thigh_Roll_1">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0.0018981902275053697 0.019583519640866093 -0.12831389300982474"/>
+      <mass value="1.3008191688294266"/>
+      <inertia ixx="0.015962" ixy="-3e-06" ixz="0.000543" iyy="0.015855" iyz="0.000687" izz="0.0032"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="-0.1533 0.022061 0.198817"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/LL3_Thigh_Roll_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="-0.1533 0.022061 0.198817"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/LL3_Thigh_Roll_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="LL4_Calf_Pitch_1">
+    <inertial>
+      <origin rpy="0 0 0" xyz="-0.03663022725908807 -0.006847611050030948 -0.0990752705352903"/>
+      <mass value="3.5208590966405535"/>
+      <inertia ixx="0.041823" ixy="6.3e-05" ixz="-0.002532" iyy="0.040863" iyz="-0.000668" izz="0.00575"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="-0.18705 -8.9e-05 0.476908"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/LL4_Calf_Pitch_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="-0.18705 -8.9e-05 0.476908"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/LL4_Calf_Pitch_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="LL5_ankle_Pitch_1">
+    <inertial>
+      <origin rpy="0 0 0" xyz="-1.786119036142897e-05 -1.7597899672597896e-05 -3.717371188649565e-08"/>
+      <mass value="0.5674124782185119"/>
+      <inertia ixx="0.000232" ixy="-0.0" ixz="-0.0" iyy="0.000232" iyz="-0.0" izz="0.000417"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="-0.1523 -8.9e-05 0.806908"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/LL5_ankle_Pitch_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="-0.1523 -8.9e-05 0.806908"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/LL5_ankle_Pitch_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="LL6_Foot_Roll_1">
+    <inertial>
+      <origin rpy="0 0 0" xyz="-5.93420060868155e-08 0.03617483681434603 -0.0867459184866598"/>
+      <mass value="1.9542439532063223"/>
+      <inertia ixx="0.004119" ixy="-2e-06" ixz="-1e-06" iyy="0.002093" iyz="-0.000615" izz="0.00392"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="-0.1523 0.040911 0.806908"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/LL6_Foot_Roll_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="-0.1523 0.040911 0.806908"/>
+      <geometry>
+        <mesh filename="file://C:/Users/jingj/IsaacLab/source/isaaclab_assets/data/Hanu/full_body_description/meshes/LL6_Foot_Roll_1.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="base to neck yaw" type="continuous">
+    <origin rpy="0 0 0" xyz="0.0 0.02 0.546897"/>
+    <parent link="base_link"/>
+    <child link="Neck_1"/>
+    <axis xyz="-0.0 0.0 1.0"/>
+    <limit effort="2.4" velocity="20"/>
+  </joint>
+  <joint name="neck to torso Pitch" type="revolute">
+    <origin rpy="0 0 0" xyz="0.0 0.0 -0.081897"/>
+    <parent link="Neck_1"/>
+    <child link="Torso_1"/>
+    <axis xyz="-1.0 0.0 0.0"/>
+    <limit effort="5.6" lower="-1.047198" upper="0.523599" velocity="20"/>
+  </joint>
+  <joint name="torso to E1R front lidar Fixed" type="fixed">
+    <origin rpy="0 0 0" xyz="0.0 -0.105408 -0.076932"/>
+    <parent link="Torso_1"/>
+    <child link="fixed_E1R_1"/>
+  </joint>
+  <joint name="torso to mid360 back lidar" type="fixed">
+    <origin rpy="0 0 0" xyz="0.0 0.12412 -0.042237"/>
+    <parent link="Torso_1"/>
+    <child link="fixed_mid_360_1"/>
+  </joint>
+  <joint name="torso to IMU" type="fixed">
+    <origin rpy="0 0 0" xyz="0.0 -0.02004 -0.35"/>
+    <parent link="Torso_1"/>
+    <child link="fixed_imu_1"/>
+  </joint>
+  <joint name="torso to LA1 Shoulder Pitch" type="continuous">
+    <origin rpy="0 0 0" xyz="0.1645 -0.02 -0.055"/>
+    <parent link="Torso_1"/>
+    <child link="LA1_Shoulder_Pitch_1"/>
+    <axis xyz="-1.0 0.0 0.0"/>
+    <limit effort="72" velocity="20"/>
+  </joint>
+  <joint name="LA1 Shoulder to LA2 Shoulder Roll" type="revolute">
+    <origin rpy="0 0 0" xyz="0.0615 0.035581 -0.00366"/>
+    <parent link="LA1_Shoulder_Pitch_1"/>
+    <child link="LA2_Shoulder_Roll_1"/>
+    <axis xyz="0.0 -1.0 0.0"/>
+    <limit effort="36" lower="-0.20944" upper="3.403392" velocity="20"/>
+  </joint>
+  <joint name="LA2 Shoulder to LA3 Upper Arm Yaw" type="continuous">
+    <origin rpy="0 0 0" xyz="0.0 -0.032 -0.109"/>
+    <parent link="LA2_Shoulder_Roll_1"/>
+    <child link="LA3_Upper_Arm_Yaw_1"/>
+    <axis xyz="-0.0 0.0 1.0"/>
+    <limit effort="32" velocity="20"/>
+  </joint>
+  <joint name="LA3 Upper Arm to LA4 Lower Arm Pitch" type="revolute">
+    <origin rpy="0 0 0" xyz="-0.032 0.0 -0.2205"/>
+    <parent link="LA3_Upper_Arm_Yaw_1"/>
+    <child link="LA4_Lower_Arm_Pitch_1"/>
+    <axis xyz="1.0 0.0 0.0"/>
+    <limit effort="36" lower="-2.007129" upper="2.007129" velocity="20"/>
+  </joint>
+  <joint name="LA4 Lower Arm to LA5 Wrist Yaw" type="continuous">
+    <origin rpy="0 0 0" xyz="0.031431 -0.000723 -0.107501"/>
+    <parent link="LA4_Lower_Arm_Pitch_1"/>
+    <child link="LA5_Wrist_Yaw_1"/>
+    <axis xyz="-0.0 -0.0 -1.0"/>
+    <limit effort="3.6" velocity="20"/>
+  </joint>
+  <joint name="LA5 Wrist to LA6 Wrist Pitch" type="revolute">
+    <origin rpy="0 0 0" xyz="-0.033941 0.001007 -0.148121"/>
+    <parent link="LA5_Wrist_Yaw_1"/>
+    <child link="LA6_Wrist_Pitch_1"/>
+    <axis xyz="-1.0 0.0 0.0"/>
+    <limit effort="27.2" lower="-2.007129" upper="2.007129" velocity="20"/>
+  </joint>
+  <joint name="LA6 Wrist to LA7 Hand Roll" type="revolute">
+    <origin rpy="0 0 0" xyz="0.032805 -0.020027 -0.058981"/>
+    <parent link="LA6_Wrist_Pitch_1"/>
+    <child link="LA7_Hand_Roll_1"/>
+    <axis xyz="-0.0 -1.0 0.0"/>
+    <limit effort="3.6" lower="-1.832596" upper="1.832596" velocity="20"/>
+  </joint>
+  <joint name="torso to RA1 Shoulder Pitch" type="continuous">
+    <origin rpy="0 0 0" xyz="-0.1645 -0.02 -0.055"/>
+    <parent link="Torso_1"/>
+    <child link="RA1_Shoulder_Pitch_1"/>
+    <axis xyz="1.0 -0.0 -0.0"/>
+    <limit effort="72" velocity="20"/>
+  </joint>
+  <joint name="RA1 Shoulder to RA2 Shoulder Roll " type="revolute">
+    <origin rpy="0 0 0" xyz="-0.0615 0.035581 -0.00366"/>
+    <parent link="RA1_Shoulder_Pitch_1"/>
+    <child link="RA2_Shoulder_Roll_1"/>
+    <axis xyz="0.0 1.0 -0.0"/>
+    <limit effort="36" lower="-0.20944" upper="3.403392" velocity="20"/>
+  </joint>
+  <joint name="RA2 Shoulder to RA3 Upper Arm Yaw" type="continuous">
+    <origin rpy="0 0 0" xyz="0.0 -0.032 -0.109"/>
+    <parent link="RA2_Shoulder_Roll_1"/>
+    <child link="RA3_Upper_Arm_Yaw_1"/>
+    <axis xyz="0.0 0.0 1.0"/>
+    <limit effort="32" velocity="20"/>
+  </joint>
+  <joint name="RA3 Upper Arm to RA4 Lower Arm Pitch " type="revolute">
+    <origin rpy="0 0 0" xyz="-0.023 0.0 -0.2207"/>
+    <parent link="RA3_Upper_Arm_Yaw_1"/>
+    <child link="RA4_Lower_Arm_Pitch_1"/>
+    <axis xyz="-1.0 0.0 0.0"/>
+    <limit effort="36" lower="-2.007129" upper="2.007129" velocity="20"/>
+  </joint>
+  <joint name="RA4 Lower Arm to RA5 Wrist Yaw" type="continuous">
+    <origin rpy="0 0 0" xyz="0.02381 -0.001023 -0.106987"/>
+    <parent link="RA4_Lower_Arm_Pitch_1"/>
+    <child link="RA5_Wrist_Yaw_1"/>
+    <axis xyz="-0.0 0.0 1.0"/>
+    <limit effort="3.6" velocity="20"/>
+  </joint>
+  <joint name="RA5 Wrist to RA6 Wrist Pitch" type="revolute">
+    <origin rpy="0 0 0" xyz="-0.028559 0.001007 -0.14812"/>
+    <parent link="RA5_Wrist_Yaw_1"/>
+    <child link="RA6_Wrist_Pitch_1"/>
+    <axis xyz="-1.0 -0.0 0.0"/>
+    <limit effort="27.2" lower="-2.007129" upper="2.007129" velocity="20"/>
+  </joint>
+  <joint name="RA6 Wrist to RA7 Hand Roll" type="revolute">
+    <origin rpy="0 0 0" xyz="0.030195 -0.020027 -0.058982"/>
+    <parent link="RA6_Wrist_Pitch_1"/>
+    <child link="RA7_Hand_Roll_1"/>
+    <axis xyz="-0.0 1.0 -0.0"/>
+    <limit effort="3.6" lower="-1.832596" upper="1.832596" velocity="20"/>
+  </joint>
+  <joint name="torso to abdomen Yaw" type="continuous">
+    <origin rpy="0 0 0" xyz="0.0 -0.02004 -0.355"/>
+    <parent link="Torso_1"/>
+    <child link="abdomen_1"/>
+    <axis xyz="0.0 0.0 -1.0"/>
+    <limit effort="32" lower="-1.5708" upper="1.5708" velocity="20"/>
+  </joint>
+  <joint name="abdomen to hip Pitch" type="revolute">
+    <origin rpy="0 0 0" xyz="0.0 0.0 -0.1095"/>
+    <parent link="abdomen_1"/>
+    <child link="Hip_1"/>
+    <axis xyz="1.0 -0.0 0.0"/>
+    <limit effort="176" lower="-1.518436" upper="1.518436" velocity="20"/>
+  </joint>
+  <joint name="hip to RL1 Groin Yaw" type="revolute">
+    <origin rpy="0 0 0" xyz="-0.08 0.000129 -0.117017"/>
+    <parent link="Hip_1"/>
+    <child link="RL1_Groin_Yaw_1"/>
+    <axis xyz="0.0 -0.0 1.0"/>
+    <limit effort="36" lower="-0.785398" upper="0.785398" velocity="20"/>
+  </joint>
+  <joint name="RL1 Groin to RL2 Buttock Pitch" type="revolute">
+    <origin rpy="0 0 0" xyz="-0.004 0.0 -0.0823"/>
+    <parent link="RL1_Groin_Yaw_1"/>
+    <child link="RL2_Buttock_Pitch_1"/>
+    <axis xyz="1.0 -0.0 -0.0"/>
+    <limit effort="120" lower="-2.356194" upper="2.356194" velocity="20"/>
+  </joint>
+  <joint name="RL2 Buttock to RL3 Thigh Roll" type="revolute">
+    <origin rpy="0 0 0" xyz="-0.0693 -0.02245 0.0"/>
+    <parent link="RL2_Buttock_Pitch_1"/>
+    <child link="RL3_Thigh_Roll_1"/>
+    <axis xyz="-0.0 1.0 -0.0"/>
+    <limit effort="72" lower="-0.087266" upper="2.617994" velocity="20"/>
+  </joint>
+  <joint name="RL3 Thigh to RL4 Calf Pitch" type="revolute">
+    <origin rpy="0 0 0" xyz="-0.01725 0.02215 -0.278091"/>
+    <parent link="RL3_Thigh_Roll_1"/>
+    <child link="RL4_Calf_Pitch_1"/>
+    <axis xyz="1.0 0.0 -0.0"/>
+    <limit effort="120" lower="0.0" upper="2.007129" velocity="20"/>
+  </joint>
+  <joint name="RL4 Calf to RL5 ankle Pitch" type="revolute">
+    <origin rpy="0 0 0" xyz="0.01825 0.0 -0.33"/>
+    <parent link="RL4_Calf_Pitch_1"/>
+    <child link="RL5_ankle_Pitch_1"/>
+    <axis xyz="1.0 0.0 0.0"/>
+    <limit effort="48" lower="-0.872665" upper="0.872665" velocity="20"/>
+  </joint>
+  <joint name="RL5 ankle to RL6 Foot Roll" type="revolute">
+    <origin rpy="0 0 0" xyz="0.0 -0.041 0.0"/>
+    <parent link="RL5_ankle_Pitch_1"/>
+    <child link="RL6_Foot_Roll_1"/>
+    <axis xyz="-0.0 1.0 0.0"/>
+    <limit effort="48" lower="-0.785398" upper="0.785398" velocity="20"/>
+  </joint>
+  <joint name="hip to LL1 Groin Yaw" type="revolute">
+    <origin rpy="0 0 0" xyz="0.08 0.000129 -0.117017"/>
+    <parent link="Hip_1"/>
+    <child link="LL1_Groin_Yaw_1"/>
+    <axis xyz="0.0 -0.0 1.0"/>
+    <limit effort="36" lower="-0.785398" upper="0.785398" velocity="20"/>
+  </joint>
+  <joint name="LL1 Groin to LL2 Buttock Pitch" type="revolute">
+    <origin rpy="0 0 0" xyz="0.004 0.0 -0.0823"/>
+    <parent link="LL1_Groin_Yaw_1"/>
+    <child link="LL2_Buttock_Pitch_1"/>
+    <axis xyz="1.0 0.0 0.0"/>
+    <limit effort="120" lower="-2.356194" upper="2.356194" velocity="20"/>
+  </joint>
+  <joint name="LL2 Buttock to LL3 Thigh Roll" type="revolute">
+    <origin rpy="0 0 0" xyz="0.0693 -0.02215 0.0"/>
+    <parent link="LL2_Buttock_Pitch_1"/>
+    <child link="LL3_Thigh_Roll_1"/>
+    <axis xyz="0.0 1.0 -0.0"/>
+    <limit effort="72" lower="-2.617994" upper="0.087266" velocity="20"/>
+  </joint>
+  <joint name="LL3 Thigh to LL4 Calf Pitch" type="revolute">
+    <origin rpy="0 0 0" xyz="0.03375 0.02215 -0.278091"/>
+    <parent link="LL3_Thigh_Roll_1"/>
+    <child link="LL4_Calf_Pitch_1"/>
+    <axis xyz="1.0 -0.0 0.0"/>
+    <limit effort="120" lower="0.0" upper="2.007129" velocity="20"/>
+  </joint>
+  <joint name="LL4 Calf to LL5 ankle Pitch" type="revolute">
+    <origin rpy="0 0 0" xyz="-0.03475 0.0 -0.33"/>
+    <parent link="LL4_Calf_Pitch_1"/>
+    <child link="LL5_ankle_Pitch_1"/>
+    <axis xyz="1.0 -0.0 -0.0"/>
+    <limit effort="48" lower="-0.872665" upper="0.872665" velocity="20"/>
+  </joint>
+  <joint name="LL5 ankle to LL6 Foot Roll" type="revolute">
+    <origin rpy="0 0 0" xyz="0.0 -0.041 0.0"/>
+    <parent link="LL5_ankle_Pitch_1"/>
+    <child link="LL6_Foot_Roll_1"/>
+    <axis xyz="-0.0 -1.0 -0.0"/>
+    <limit effort="48" lower="-0.785398" upper="0.785398" velocity="20"/>
+  </joint>
+</robot>

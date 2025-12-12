@@ -6,6 +6,9 @@
 """
 Python module serving as a project/extension template.
 """
+import os
+
+HANU_LAB_EXT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 
 # Register Gym environments.
 from .tasks import *
