@@ -3,6 +3,6 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
-import gymnasium as gym  # noqa: F401
+"""Locomotion tasks for manager-based environments."""
 
-from . import locomotion
+from . import velocity
