@@ -15,7 +15,7 @@ from isaaclab_rl.rsl_rl import RslRlOnPolicyRunnerCfg, RslRlPpoActorCriticCfg, R
 class HanuA2RoughPPORunnerCfg(RslRlOnPolicyRunnerCfg):
     num_steps_per_env = 24
     max_iterations = 3000
-    save_interval = 100
+    save_interval = 1000
     experiment_name = "hanu_a2_rough"
     empirical_normalization = False
     policy = RslRlPpoActorCriticCfg(
