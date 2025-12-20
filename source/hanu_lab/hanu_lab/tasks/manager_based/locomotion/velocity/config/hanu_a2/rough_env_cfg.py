@@ -199,8 +199,8 @@ class HanuA2RoughEnvCfg(LocomotionVelocityRoughEnvCfg):
         super().__post_init__()
 
         # ------ Scene configuration --------
-        self.scene.robot = HANU_A2_CFG.replace(prim_path="{ENV_REGEX_NS}/robot")   
-        self.scene.height_scanner.prim_path = "/World/envs/env_.*/robot/hanumanoid/fixed_E1R"
+        self.scene.robot = HANU_A2_CFG.replace(prim_path="{ENV_REGEX_NS}/robot")
+        self.scene.height_scanner.prim_path = "/World/envs/env_.*/robot/hanumanoid/E1R_1"
         self.scene.contact_forces.prim_path = "{ENV_REGEX_NS}/robot/hanumanoid/.*"
 
         self.scene.terrain.terrain_generator.sub_terrains["boxes"].grid_height_range = (0.025, 0.1)
@@ -284,11 +284,31 @@ class HanuA2RoughEnvCfgV0(HanuA2RoughEnvCfg):
         self.events.base_external_force_torque = None
         self.events.base_com = None
 
-        # ------ Rewards configuration --------
-        self.rewards.action_rate_l2.weight = -0.01
-        # ------ Terminations configuration --------
-        self.terminations.base_contact.params["sensor_cfg"].body_names = [f"^(?!.*{self.foot_link_name}).*"]
+        self.events.reset_robot_joints.params["position_range"] = (0.5, 1.5)
+        self.events.reset_base.params = {
+            "pose_range": {"x": (-0.5, 0.5), "y": (-0.5, 0.5), "yaw": (-3.14, 3.14)},
+            "velocity_range": {
+                "x": (-0.5, 0.5),
+                "y": (-0.5, 0.5),
+                "z": (-0.5, 0.5),
+                "roll": (-0.5, 0.5),
+                "pitch": (-0.5, 0.5),
+                "yaw": (-0.5, 0.5),
+            },
+        }
 
+        # ------- Rewards configuration --------
+        self.rewards.feet_air_time.weight = 0.3
+        self.rewards.feet_air_time.params["threshold"] = 0.4
+        self.rewards.feet_slide.weight = -0.2
+
+        self.rewards.action_rate_l2.weight = -0.005 # h1_rough
+
+        # ------ Commands configuration --------
+        self.commands.base_velocity.ranges.lin_vel_y = (-0.0, 1.5) # (-1.0, 0.0)
+        self.commands.base_velocity.ranges.ang_vel_z = (-0.5, 0.5)
+         # ------ Terminations configuration --------
+        self.terminations.base_contact.params["sensor_cfg"].body_names = "torso_.*"
 
 @configclass
 class HanuA2RoughEnvCfgV1(HanuA2RoughEnvCfg):
@@ -309,9 +329,10 @@ class HanuA2RoughEnvCfgV1(HanuA2RoughEnvCfg):
         #     "y": (-0.05, 0.05), 
         #     "z": (-0.01, 0.01)
         # }
-        self.events.base_com = None  # disabling for now
-        self.events.base_external_force_torque.params["asset_cfg"].body_names = "torso_.*"
-        self.events.base_external_force_torque.params["force_range"] = (-0.75, 1.25)
+        self.events.base_com = None  # disabling for now hanu_rough
+        # self.events.base_external_force_torque.params["asset_cfg"].body_names = "torso_.*"
+        # self.events.base_external_force_torque.params["force_range"] = (-0.75, 1.25)
+        self.events.base_external_force_torque = None  # disabling for now hanu_rough
 
         self.events.reset_robot_joints.params["position_range"] = (0.5, 1.5)
         self.events.reset_base.params = {
@@ -328,12 +349,15 @@ class HanuA2RoughEnvCfgV1(HanuA2RoughEnvCfg):
 
         # ------- Rewards configuration --------
         self.rewards.feet_air_time.weight = 0.3
-        self.rewards.feet_air_time.params["threshold"] = 0.2
+        self.rewards.feet_air_time.params["threshold"] = 0.4
         self.rewards.feet_slide.weight = -0.2
+
+        self.rewards.action_rate_l2.weight = -0.005 # h1_rough
 
         # ------ Commands configuration --------
         self.commands.base_velocity.ranges.lin_vel_y = (-0.0, 1.5) # (-1.0, 0.0)
-        self.commands.base_velocity.ranges.ang_vel_z = (-0.0, 0.0)
+        self.commands.base_velocity.ranges.ang_vel_z = (-0.5, 0.5)
 
         # ------ Terminations configuration --------
-        self.terminations.base_contact.params["sensor_cfg"].body_names = [f"^(?!.*{self.foot_link_name}).*"]
+        self.terminations.base_contact.params["sensor_cfg"].body_names = "torso_.*"
+        # self.terminations.base_contact.params["sensor_cfg"].body_names = [f"^(?!.*{self.foot_link_name}).*"]
