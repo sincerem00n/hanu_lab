@@ -538,7 +538,9 @@ HANU_A2_CFG = ArticulationCfg(
             joint_names_expr=[
                 ".*_neck_.*",
                 ".*_abdomen_.*",
-                ".*_E1R"
+                ".*_E1R",
+                ".*_wrist_.*",
+
             ],
             effort_limit=300.0,
             stiffness=40.0,
