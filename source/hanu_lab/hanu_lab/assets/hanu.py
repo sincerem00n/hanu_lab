@@ -107,7 +107,7 @@ HANU_A0_CFG = ArticulationCfg(
                 # "torso_joint": 200.0,
             },
             damping={
-                ".*": 1.0,  # Set damping for all joints
+                ".*": 5.0,  # Set damping for all joints
             },
         ),
         "feet": ImplicitActuatorCfg(

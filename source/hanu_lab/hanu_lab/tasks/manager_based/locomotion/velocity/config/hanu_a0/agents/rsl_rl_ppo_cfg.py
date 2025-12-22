@@ -45,6 +45,7 @@ class HanumanoidA0FlatPPORunnerCfg(HanumanoidA0RoughPPORunnerCfg):
         super().__post_init__()
 
         self.max_iterations = 500
+        self.save_interval = 1000
         self.experiment_name = "hanu_a0_flat"
         self.policy.actor_hidden_dims = [128, 128, 128]
         self.policy.critic_hidden_dims = [128, 128, 128]

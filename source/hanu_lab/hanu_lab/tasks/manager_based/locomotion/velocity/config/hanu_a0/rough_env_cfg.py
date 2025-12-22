@@ -1,8 +1,3 @@
-# Copyright (c) 2022-2025, The Isaac Lab Project Developers.
-# All rights reserved.
-#
-# SPDX-License-Identifier: BSD-3-Clause
-
 # Copyright (c) 2025, RAI Hanumanoid Project Developers.
 # All rights reserved.
 
@@ -10,7 +5,6 @@
 
 import math
 
-import isaacsim.asset.importer.urdf
 import omni.usd
 from pxr import UsdPhysics
 
@@ -103,15 +97,15 @@ class HanumanoidA0RoughEnvCfg(LocomotionVelocityRoughEnvCfg):
 
         # scene
         # self.scene.robot.prim_path = "{ENV_REGEX_NS}/LegV5_URDF_Export"
-        self.scene.robot = HANU_A0_CFG.replace(prim_path="{ENV_REGEX_NS}/LegV5_URDF_Export")  #! TODO: check dir
+        self.scene.robot = HANU_A0_CFG.replace(prim_path="{ENV_REGEX_NS}/robot")  #! TODO: check dir
         # self.scene.robot = HANU_A0_CFG
 
         self.scene.height_scanner.prim_path = (  # TODO: change Robot name
-            "{ENV_REGEX_NS}/LegV5_URDF_Export/LegV5_URDF_Export/base_link"
+            "{ENV_REGEX_NS}/robot/LegV5_URDF_Export/base_link"
         )
         # /World/LegV5_URDF_Export/base_link
 
-        self.scene.contact_forces.prim_path = "{ENV_REGEX_NS}/LegV5_URDF_Export/LegV5_URDF_Export/.*"
+        self.scene.contact_forces.prim_path = "{ENV_REGEX_NS}/robot/LegV5_URDF_Export/.*"
 
         # check if the rigid bodies are loaded correctly
         # stage = omni.usd.get_context().get_stage()
