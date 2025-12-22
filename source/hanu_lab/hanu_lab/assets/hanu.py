@@ -549,3 +549,96 @@ HANU_A2_CFG = ArticulationCfg(
     },
 )
 """Configuration for the Hanumanoid A2 robot."""
+
+HANU_A3_CFG = ArticulationCfg(
+    prim_path="{ENV_REGEX_NS}/hanu_a3",
+    spawn=sim_util.UsdFileCfg(
+        usd_path=f"{HANU_LAB_EXT_DIR}/hanu_lab/data/Robots/hanu/hanu_a3_description/urdf/hanu_a3/hanu_a3_v1.usd", 
+        activate_contact_sensors=True,
+        rigid_props=sim_util.RigidBodyPropertiesCfg(
+            disable_gravity=False,
+            retain_accelerations=False,
+            linear_damping=0.0,
+            angular_damping=0.0,
+            max_linear_velocity=1000.0,
+            max_angular_velocity=1000.0,
+            max_depenetration_velocity=1.0,
+        ),
+        articulation_props=sim_util.ArticulationRootPropertiesCfg(
+            enabled_self_collisions=False,
+            solver_position_iteration_count=8,
+            solver_velocity_iteration_count=4,
+            sleep_threshold=0.005,
+            stabilization_threshold=0.001,
+        ),
+    ),
+    init_state=ArticulationCfg.InitialStateCfg(
+        pos=(0.0, 0.0, 1.0),  # (x, y, z)
+        rot=(1.0, 0.0, 0.0, 0.0),  # (w, x, y, z)
+        joint_pos={
+            # bend legs
+            ".*_hip_pitch": -0.32,
+            ".*_knee_pitch": 0.42,
+            ".*_ankle_pitch": 0.30,
+            # wider legs
+            ".*_l_hip_roll": 0.02,
+            ".*_r_hip_roll": 0.02,
+            ".*_l_ankle_roll": -0.02,
+            ".*_r_ankle_roll": 0.02,
+            ".*_l_hip_yaw": -0.08,
+            ".*_r_hip_yaw": -0.08,
+            # bend arms
+            ".*_shoulder_pitch": 0.40,
+            ".*_elbow_pitch": -0.9,
+            ".*_shoulder_roll": 0.02,
+        },
+        joint_vel={".*": 0.0},
+    ),
+    soft_joint_pos_limit_factor=0.9,
+    actuators={
+        "legs": ImplicitActuatorCfg(
+            joint_names_expr=[
+                ".*_hip_.*",
+                ".*_knee_.*",
+            ],
+            effort_limit=300.0,
+            stiffness={
+                ".*_hip_yaw": 200.0,
+                ".*_hip_roll": 200.0,
+                ".*_hip_pitch": 250.0,
+                ".*_knee_pitch": 250.0,
+            },
+            damping=5.0,
+        ),
+        "feet": ImplicitActuatorCfg(
+            joint_names_expr=[
+                ".*_ankle_.*",
+            ],
+            effort_limit=20.0,
+            stiffness=20.0,
+            damping=2.0,
+        ),
+        "arms": ImplicitActuatorCfg(
+            joint_names_expr=[
+                ".*_shoulder_.*",
+                ".*_elbow_.*",
+            ],
+            effort_limit=300.0,
+            stiffness=40.0,
+            damping=10.0,
+        ),
+        "others": ImplicitActuatorCfg(
+            joint_names_expr=[
+                ".*_neck_.*",
+                ".*_abdomen_.*",
+                ".*_E1R",
+                ".*_wrist_.*",
+
+            ],
+            effort_limit=300.0,
+            stiffness=40.0,
+            damping=10.0,
+        ),
+    },
+)
+"""Configuration for the Hanumanoid A3 robot."""
