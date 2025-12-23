@@ -281,7 +281,7 @@ class HanuA3RoughEnvCfgV0(HanuA3RoughEnvCfg):
         self.rewards.action_rate_l2.weight = -0.005 # h1_rough
 
         # ------ Commands configuration --------
-        self.commands.base_velocity.ranges.lin_vel_y = (-0.0, 1.5) # (-1.0, 0.0)
+        self.commands.base_velocity.ranges.lin_vel_y = (-0.0, 1.0) # (-1.0, 0.0)
         self.commands.base_velocity.ranges.ang_vel_z = (-0.5, 0.5)
          # ------ Terminations configuration --------
         self.terminations.base_contact.params["sensor_cfg"].body_names = "base_.*"
@@ -324,16 +324,17 @@ class HanuA3RoughEnvCfgV1(HanuA3RoughEnvCfg):
         }
 
         # ------- Rewards configuration --------
-        self.rewards.feet_air_time.weight = 0.3
-        self.rewards.feet_air_time.params["threshold"] = 0.4
+        self.rewards.track_lin_vel_xy_exp.weight = 3.0
+        self.rewards.feet_air_time.weight = 1.0
+        self.rewards.feet_air_time.params["threshold"] = 0.6
         self.rewards.feet_slide.weight = -0.2
-
-        self.rewards.action_rate_l2.weight = -0.005 # h1_rough
+        
+        self.rewards.action_rate_l2.weight = -0.005
 
         # ------ Commands configuration --------
-        self.commands.base_velocity.ranges.lin_vel_y = (-0.0, 1.5) # (-1.0, 0.0)
+        self.commands.base_velocity.ranges.lin_vel_y = (-0.0, 1.0) # (-1.0, 0.0)
         self.commands.base_velocity.ranges.ang_vel_z = (-0.5, 0.5)
 
         # ------ Terminations configuration --------
-        self.terminations.base_contact.params["sensor_cfg"].body_names = "base_.*"
-        # self.terminations.base_contact.params["sensor_cfg"].body_names = [f"^(?!.*{self.foot_link_name}).*"]
+        # self.terminations.base_contact.params["sensor_cfg"].body_names = "base_.*"
+        self.terminations.base_contact.params["sensor_cfg"].body_names = [f"^(?!.*{self.foot_link_name}).*"]
