@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING
 from isaaclab.envs import mdp
 from isaaclab.managers import SceneEntityCfg
 from isaaclab.sensors import ContactSensor
-from isaaclab.assets import RigidObject
+from isaaclab.assets import RigidObject, Articulation
 from isaaclab.utils.math import quat_apply_inverse, yaw_quat
 
 if TYPE_CHECKING:
@@ -137,3 +137,74 @@ def upright_orientation_l2(
     penalty = torch.sum(torch.square(deviation), dim=1)
     # Return negative penalty as reward (higher reward when closer to upright)
     return -penalty
+
+def action_mirror(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg, mirror_joints: list[list[str]]) -> torch.Tensor:
+    """
+    Penalize asymmetry in effort between specific joint pairs (e.g. Left Hip vs Right Hip).
+
+    This function computes the squared difference between the absolute action magnitudes 
+    of matched pairs. This encourages the robot to use equal effort on both sides of the 
+    body (preventing limping), regardless of the direction of motion.
+    """
+    asset: Articulation = env.scene[asset_cfg.name]
+    if not hasattr(env, "action_mirror_joints_cache") or env.action_mirror_joints_cache is None:
+        # Cache joint positions for all pairs
+        env.action_mirror_joints_cache = [
+            [asset.find_joints(joint_name) for joint_name in joint_pair] for joint_pair in mirror_joints
+        ]
+    reward = torch.zeros(env.num_envs, device=env.device)
+    # Iterate over all joint pairs
+    for joint_pair in env.action_mirror_joints_cache:
+        # Calculate the difference for each pair and add to the total reward
+        diff = torch.sum(
+            torch.square(
+                torch.abs(env.action_manager.action[:, joint_pair[0][0]])
+                - torch.abs(env.action_manager.action[:, joint_pair[1][0]])
+            ),
+            dim=-1,
+        )
+        reward += diff
+    reward *= 1 / len(mirror_joints) if len(mirror_joints) > 0 else 0
+    reward *= torch.clamp(-env.scene["robot"].data.projected_gravity_b[:, 2], 0, 0.7) / 0.7
+    return reward
+
+
+def action_sync(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg, joint_groups: list[list[str]]) -> torch.Tensor:
+    """
+    Penalize variance within groups of joints.
+
+    This function calculates the variance of the absolute action magnitudes within each 
+    specified group. This encourages all joints in a group (e.g., all 4 hip motors, 
+    or duplicate motors on a single joint) to exert consistent levels of effort 
+    relative to each other.
+    """
+    asset: Articulation = env.scene[asset_cfg.name]
+
+    # Cache joint indices if not already done
+    if not hasattr(env, "action_sync_joint_cache") or env.action_sync_joint_cache is None:
+        env.action_sync_joint_cache = [
+            [asset.find_joints(joint_name) for joint_name in joint_group] for joint_group in joint_groups
+        ]
+
+    reward = torch.zeros(env.num_envs, device=env.device)
+    # Iterate over each joint group
+    for joint_group in env.action_sync_joint_cache:
+        if len(joint_group) < 2:
+            continue  # need at least 2 joints to compare
+
+        # Get absolute actions for all joints in this group
+        actions = torch.stack(
+            [torch.abs(env.action_manager.action[:, joint[0]]) for joint in joint_group], dim=1
+        )  # shape: (num_envs, num_joints_in_group)
+
+        # Calculate mean action for each environment
+        mean_actions = torch.mean(actions, dim=1, keepdim=True)
+
+        # Calculate variance from mean for each joint
+        variance = torch.mean(torch.square(actions - mean_actions), dim=1)
+
+        # Add to reward (we want to minimize this variance)
+        reward += variance.squeeze()
+    reward *= 1 / len(joint_groups) if len(joint_groups) > 0 else 0
+    reward *= torch.clamp(-env.scene["robot"].data.projected_gravity_b[:, 2], 0, 0.7) / 0.7
+    return reward

@@ -65,6 +65,19 @@ class HanuA3RewardsCfg(RewardsCfg):
         },
     )
 
+    feet_mirror = RewTerm(
+        func=mdp.action_mirror,
+        weight=-0.1,
+        params={
+            "asset_cfg": SceneEntityCfg("robot"),
+            "mirror_joints": [
+                ["Joint_l_hip_pitch", "Joint_r_hip_pitch"],
+                ["Joint_l_knee_pitch", "Joint_r_knee_pitch"],
+                ["Joint_l_ankle_pitch", "Joint_r_ankle_pitch"],
+            ],
+        },
+    )
+
     upright_orientation = RewTerm(
         func=mdp.upright_orientation_l2,
         weight=1.0,
@@ -87,7 +100,7 @@ class HanuA3RewardsCfg(RewardsCfg):
 
     joint_deviation_arms = RewTerm(
         func=mdp.joint_deviation_l1,
-        weight=-0.1,
+        weight=-0.0,
         params={
             "asset_cfg": SceneEntityCfg(
                 "robot",
@@ -326,8 +339,9 @@ class HanuA3RoughEnvCfgV1(HanuA3RoughEnvCfg):
         # ------- Rewards configuration --------
         self.rewards.track_lin_vel_xy_exp.weight = 3.0
         self.rewards.feet_air_time.weight = 1.0
-        self.rewards.feet_air_time.params["threshold"] = 0.6
+        self.rewards.feet_air_time.params["threshold"] = 0.4
         self.rewards.feet_slide.weight = -0.2
+        self.rewards.feet_mirror.weight = -0.1
         
         self.rewards.action_rate_l2.weight = -0.005
 
