@@ -24,7 +24,7 @@ from isaaclab.utils import configclass
 import hanu_lab.tasks.manager_based.locomotion.velocity.mdp as mdp
 from hanu_lab.tasks.manager_based.locomotion.velocity.velocity_env_cfg import LocomotionVelocityRoughEnvCfg, RewardsCfg, TerminationsCfg, CommandsCfg, EventCfg
 
-from .env import rewards
+
 
 @configclass
 class HanuA3RewardsCfg(RewardsCfg):
@@ -66,7 +66,7 @@ class HanuA3RewardsCfg(RewardsCfg):
     )
 
     upright_orientation = RewTerm(
-        func=rewards.upright_orientation_l2,
+        func=mdp.upright_orientation_l2,
         weight=1.0,
         params={
             "asset_cfg": SceneEntityCfg("robot"), 
@@ -334,6 +334,7 @@ class HanuA3RoughEnvCfgV1(HanuA3RoughEnvCfg):
         # ------ Commands configuration --------
         self.commands.base_velocity.ranges.lin_vel_y = (-0.0, 1.0) # (-1.0, 0.0)
         self.commands.base_velocity.ranges.ang_vel_z = (-0.5, 0.5)
+        self.commands.base_velocity.rel_standing_envs = 0.1
 
         # ------ Terminations configuration --------
         # self.terminations.base_contact.params["sensor_cfg"].body_names = "base_.*"
