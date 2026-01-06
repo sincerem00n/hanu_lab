@@ -31,11 +31,11 @@ class HanuA3RewardsCfg(RewardsCfg):
     termination_penalty = RewTerm(func=mdp.is_terminated, weight=-200.0)
     feet_air_time = RewTerm(
         func=mdp.feet_air_time_positive_biped,
-        weight=0.25,
+        weight=0.05,
         params={
             "sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*_foot_.*"),
             "command_name": "base_velocity",
-            "threshold": 0.4,
+            "threshold": 0.12,
         },
     )
     track_lin_vel_xy_exp = RewTerm(
@@ -58,7 +58,7 @@ class HanuA3RewardsCfg(RewardsCfg):
     )
     feet_slide = RewTerm(
         func=mdp.feet_slide,
-        weight=-0.1,
+        weight=-0.2,
         params={
             "sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*_foot_.*"),
             "asset_cfg": SceneEntityCfg("robot", body_names=".*_foot_.*"),
@@ -67,7 +67,7 @@ class HanuA3RewardsCfg(RewardsCfg):
 
     feet_mirror = RewTerm(
         func=mdp.action_mirror,
-        weight=-1.0,
+        weight=-0.08,
         params={
             "asset_cfg": SceneEntityCfg("robot"),
             "mirror_joints": [
@@ -80,7 +80,7 @@ class HanuA3RewardsCfg(RewardsCfg):
 
     upright_orientation = RewTerm(
         func=mdp.upright_orientation_l2,
-        weight=1.0,
+        weight=3.0,
         params={
             "asset_cfg": SceneEntityCfg("robot"), 
         }
@@ -124,6 +124,33 @@ class HanuA3RewardsCfg(RewardsCfg):
             )
         },
     )
+    # Fair add #
+    # ----- knee pose shaping (keep knees near reference pose)
+    knee_pose_deviation = RewTerm(
+        func=mdp.joint_deviation_l1,
+        weight=-0.08,   
+        params={
+            "asset_cfg": SceneEntityCfg(
+                "robot",
+                joint_names=[
+                    ".*_knee_.*",
+                ],
+            )
+        },
+    )
+
+    knee_dof_pos_limits = RewTerm(
+        func=mdp.joint_pos_limits,
+        weight=-0.2,
+        params={
+            "asset_cfg": SceneEntityCfg(
+                "robot", 
+                joint_names=[
+                    ".*_knee_.*",
+                ]
+            )
+        },
+    )
     
 
 @configclass
@@ -131,7 +158,7 @@ class HanuA3TerminationsCfg(TerminationsCfg):
     time_out = DoneTerm(func=mdp.time_out, time_out=True)
     base_contact = DoneTerm(
         func=mdp.illegal_contact,
-        params={"sensor_cfg": SceneEntityCfg("contact_forces", body_names="base"), "threshold": 1.0},
+        params={"sensor_cfg": SceneEntityCfg("contact_forces", body_names="base_link"), "threshold": 1.0},
     )
     # robot_fallen = DoneTerm(
     #     func=mdp.bad_orientation,
@@ -187,6 +214,7 @@ class HanuA3EventsCfg(EventCfg):
         },
     )
 
+
 @configclass
 class HanuA3RoughEnvCfg(LocomotionVelocityRoughEnvCfg):
     """Environment configuration for Hanumanoid A3 in rough terrain."""
@@ -204,13 +232,13 @@ class HanuA3RoughEnvCfg(LocomotionVelocityRoughEnvCfg):
         self.scene.height_scanner.prim_path = "/World/envs/env_.*/robot/hanu_a3/E1R_1"
         self.scene.contact_forces.prim_path = "{ENV_REGEX_NS}/robot/hanu_a3/.*"
 
-        self.scene.terrain.terrain_generator.sub_terrains["boxes"].grid_height_range = (0.025, 0.1)
-        self.scene.terrain.terrain_generator.sub_terrains["random_rough"].noise_range = (0.01, 0.06)
-        self.scene.terrain.terrain_generator.sub_terrains["random_rough"].noise_step = 0.01
+        self.scene.terrain.terrain_generator.sub_terrains["boxes"].grid_height_range = (0.0, 0.02)
+        self.scene.terrain.terrain_generator.sub_terrains["random_rough"].noise_range = (0.0, 0.02)
+        self.scene.terrain.terrain_generator.sub_terrains["random_rough"].noise_step = 0.002
 
         # ------ Events configuration --------
         # self.events.reset_robot_joints = None
-        self.events.reset_robot_joints.params["position_range"] = (1.0, 1.0)
+        self.events.reset_robot_joints.params["position_range"] = (0.95, 1.05)
         self.events.reset_base.params = {
             "pose_range": {"x": (-0.5, 0.5), "y": (-0.5, 0.5), "yaw": (-3.14, 3.14)},
             "velocity_range": {
@@ -258,7 +286,7 @@ class HanuA3RoughEnvCfg(LocomotionVelocityRoughEnvCfg):
 
         # ------ Commands configuration --------
         self.commands.base_velocity.ranges.lin_vel_x = (-0.0, 0.0)
-        self.commands.base_velocity.ranges.lin_vel_y = (-0.0, 1.0) # (-1.0, 0.0)
+        self.commands.base_velocity.ranges.lin_vel_y = (-0.0, 0.0) # (-1.0, 0.0)
         self.commands.base_velocity.ranges.ang_vel_z = (-0.0, 0.0)
         # self.commands.base_velocity.rel_standing_envs = 0.5
 
@@ -278,38 +306,73 @@ class HanuA3RoughEnvCfgV0(HanuA3RoughEnvCfg):
     """
     def __post_init__(self):
         super().__post_init__()
+        tg = self.scene.terrain.terrain_generator  
+        tg.curriculum = None
+        keep = {"boxes", "random_rough"}
+        tg.sub_terrains = {k: v for k, v in tg.sub_terrains.items() if k in keep}
 
         # ------ Events configuration --------
         self.events.push_robot = None
         self.events.add_base_mass = None
         self.events.base_external_force_torque = None
         self.events.base_com = None
+        self.scene.terrain.terrain_generator.curriculum = None
+        self.scene.height_scanner = None
+        self.observations.policy.height_scan = None
 
-        self.events.reset_robot_joints.params["position_range"] = (0.5, 1.5)
+        self.events.reset_robot_joints.params["position_range"] = (0.95, 1.05)
+        self.events.reset_robot_joints.params["velocity_range"] = (0.0, 0.0)
+
         self.events.reset_base.params = {
-            "pose_range": {"x": (-0.5, 0.5), "y": (-0.5, 0.5), "yaw": (-3.14, 3.14)},
+            "pose_range": {"x": (-0.25, 0.25), "y": (-0.25, 0.25), "yaw": (-3.14, 3.14)},
             "velocity_range": {
-                "x": (-0.5, 0.5),
-                "y": (-0.5, 0.5),
-                "z": (-0.5, 0.5),
-                "roll": (-0.5, 0.5),
-                "pitch": (-0.5, 0.5),
-                "yaw": (-0.5, 0.5),
+                "x": (-0.15, 0.15),
+                "y": (-0.15, 0.15),
+                "z": (0.0, 0.0),
+                "roll": (0.0, 0.0),
+                "pitch": (0.0, 0.0),
+                "yaw": (-0.05, 0.05),
             },
         }
 
         # ------- Rewards configuration --------
-        self.rewards.feet_air_time.weight = 0.3
-        self.rewards.feet_air_time.params["threshold"] = 0.4
-        self.rewards.feet_slide.weight = -0.2
+        self.rewards.ankle_dof_pos_limits.weight = -0.2
+        self.rewards.feet_mirror.weight = -0.05
+        self.rewards.feet_air_time.weight = 0.05
+        self.rewards.feet_air_time.params["threshold"] = 0.2
+        self.rewards.upright_orientation.weight = 1.5
+        self.rewards.dof_torques_l2.weight = -5.0e-7
+        self.rewards.action_rate_l2.weight = -5.0e-5
+        self.commands.base_velocity.rel_standing_envs = 0.1
 
-        self.rewards.action_rate_l2.weight = -0.005 # h1_rough
+
+        #self.rewards.feet_air_time.weight = 0.05
+        #self.rewards.feet_air_time.params["threshold"] = 0.25
+
+        self.rewards.feet_slide.weight = -0.25
+
+        #self.rewards.dof_torques_l2.weight = -5.0e-7
+        #self.rewards.action_rate_l2.weight = -5.0e-5
+
+        self.rewards.track_lin_vel_xy_exp.weight = 1.5
+        self.rewards.track_ang_vel_z_exp.weight = 0.6
+        self.rewards.track_ang_vel_z_exp.params["std"] = 0.5
+
+        #self.rewards.upright_orientation.weight = 1.5
+        # self.rewards.feet_mirror.weight = -0.12
+
+        # knee shaping
+        #self.rewards.knee_pose_deviation.weight = -0.08
+        self.rewards.knee_dof_pos_limits.weight = -0.2
 
         # ------ Commands configuration --------
-        self.commands.base_velocity.ranges.lin_vel_y = (-0.0, 1.0) # (-1.0, 0.0)
-        self.commands.base_velocity.ranges.ang_vel_z = (-0.5, 0.5)
-         # ------ Terminations configuration --------
+        self.commands.base_velocity.ranges.lin_vel_x = (0.2, 0.6)
+        self.commands.base_velocity.ranges.lin_vel_y = (0.0, 0.0)
+        self.commands.base_velocity.ranges.ang_vel_z = (0.0, 0.0)
+
+        # ------ Terminations configuration --------
         self.terminations.base_contact.params["sensor_cfg"].body_names = "base_.*"
+
 
 @configclass
 class HanuA3RoughEnvCfgV1(HanuA3RoughEnvCfg):
@@ -351,7 +414,7 @@ class HanuA3RoughEnvCfgV1(HanuA3RoughEnvCfg):
         # ------- Rewards configuration --------
         self.rewards.track_lin_vel_xy_exp.weight = 3.0
         self.rewards.feet_air_time.weight = 1.0
-        self.rewards.feet_air_time.params["threshold"] = 0.4
+        self.rewards.feet_air_time.params["threshold"] = 0.6
         self.rewards.feet_slide.weight = -0.2
         self.rewards.feet_mirror.weight = -1.0
         
