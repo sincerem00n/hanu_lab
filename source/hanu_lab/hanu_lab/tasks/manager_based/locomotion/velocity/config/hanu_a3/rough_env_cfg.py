@@ -231,6 +231,7 @@ class HanuA3RoughEnvCfg(LocomotionVelocityRoughEnvCfg):
         self.scene.robot = HANU_A3_CFG.replace(prim_path="{ENV_REGEX_NS}/robot")
         self.scene.height_scanner.prim_path = "/World/envs/env_.*/robot/hanu_a3/E1R_1"
         self.scene.contact_forces.prim_path = "{ENV_REGEX_NS}/robot/hanu_a3/.*"
+        self.scene.imu_sensor.prim_path = "{ENV_REGEX_NS}/robot/hanu_a3/base_link"
 
         self.scene.terrain.terrain_generator.sub_terrains["boxes"].grid_height_range = (0.0, 0.02)
         self.scene.terrain.terrain_generator.sub_terrains["random_rough"].noise_range = (0.0, 0.02)
@@ -366,8 +367,8 @@ class HanuA3RoughEnvCfgV0(HanuA3RoughEnvCfg):
         self.rewards.knee_dof_pos_limits.weight = -0.2
 
         # ------ Commands configuration --------
-        self.commands.base_velocity.ranges.lin_vel_x = (0.2, 0.6)
-        self.commands.base_velocity.ranges.lin_vel_y = (0.0, 0.0)
+        self.commands.base_velocity.ranges.lin_vel_x = (0.0, 0.0)
+        self.commands.base_velocity.ranges.lin_vel_y = (0.2, 0.6) # jing: robot facing (+)y-axis
         self.commands.base_velocity.ranges.ang_vel_z = (0.0, 0.0)
 
         # ------ Terminations configuration --------
