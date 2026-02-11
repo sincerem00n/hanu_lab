@@ -67,6 +67,30 @@ def feet_air_time_positive_biped(env, command_name: str, threshold: float, senso
     reward *= torch.norm(env.command_manager.get_command(command_name)[:, :2], dim=1) > 0.1
     return reward
 
+# New #
+
+def feet_air_time_negative_biped(env, command_name: str, threshold: float, sensor_cfg: SceneEntityCfg) -> torch.Tensor:
+    """Penalize keeping one foot in the air for too long (biped).
+
+    The penalty is applied when the robot is in single-stance (exactly one foot in contact),
+    and the swing foot's current air-time exceeds `threshold`.
+
+    If the commands are small (i.e. the agent is not supposed to step), then the penalty is zero.
+    """
+    contact_sensor: ContactSensor = env.scene.sensors[sensor_cfg.name]
+    # compute the reward
+    air_time = contact_sensor.data.current_air_time[:, sensor_cfg.body_ids]
+    contact_time = contact_sensor.data.current_contact_time[:, sensor_cfg.body_ids]
+    in_contact = contact_time > 0.0 
+    swing_air_time = torch.max(torch.where(~in_contact, air_time, 0.0), dim=1)[0]
+    single_stance = torch.sum(in_contact.int(), dim=1) == 1  
+    reward = torch.clamp(swing_air_time - threshold, min=0.0) 
+    reward *= single_stance
+    # no reward for zero command
+    reward *= torch.norm(env.command_manager.get_command(command_name)[:, :2], dim=1) > 0.1
+    return reward
+
+# New #
 
 def feet_slide(env, sensor_cfg: SceneEntityCfg, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
     """Penalize feet sliding.
@@ -207,4 +231,32 @@ def action_sync(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg, joint_groups:
         reward += variance.squeeze()
     reward *= 1 / len(joint_groups) if len(joint_groups) > 0 else 0
     reward *= torch.clamp(-env.scene["robot"].data.projected_gravity_b[:, 2], 0, 0.7) / 0.7
+    return reward
+
+
+
+def feet_step_sequence_biped(env, command_name: str, sensor_cfg: SceneEntityCfg) -> torch.Tensor:
+    """Reward alternating left-right stepping sequence for bipeds.
+
+    Gives reward only when a new swing-foot event happens AND
+    the swing foot is different from the previous one.
+    No penalty is applied for wrong sequence.
+    """
+    contact_sensor: ContactSensor = env.scene.sensors[sensor_cfg.name]
+
+    first_contact = contact_sensor.compute_first_contact(env.step_dt)[:, sensor_cfg.body_ids]
+    air_time = contact_sensor.data.current_air_time[:, sensor_cfg.body_ids]
+    toe_off = (air_time > 0.0) & (air_time < env.step_dt * 1.5)
+    valid_event = torch.sum(toe_off.int(), dim=1) == 1
+    swing_foot = torch.argmax(toe_off.int(), dim=1)
+
+    if not hasattr(env, "last_swing_foot"):
+        env.last_swing_foot = -torch.ones(env.num_envs, device=env.device)
+    correct_sequence = swing_foot != env.last_swing_foot
+    moving = torch.norm(env.command_manager.get_command(command_name)[:, :2], dim=1) > 0.1
+    reward = (valid_event & correct_sequence & moving).float()
+    env.last_swing_foot = torch.where(
+        valid_event, swing_foot, env.last_swing_foot
+    )
+
     return reward
