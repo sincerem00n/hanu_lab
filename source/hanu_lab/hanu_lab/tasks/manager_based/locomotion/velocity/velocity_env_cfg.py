@@ -72,7 +72,7 @@ class MySceneCfg(InteractiveSceneCfg):
         mesh_prim_paths=["/World/ground"],
     )
     contact_forces = ContactSensorCfg(prim_path="{ENV_REGEX_NS}/Robot/.*", history_length=3, track_air_time=True)
-    imu_sensor = ImuCfg(prim_path="{ENV_REGEX_NS}/Robot/fixed_imu_1", debug_vis=True)
+    # imu_sensor = ImuCfg(prim_path="{ENV_REGEX_NS}/Robot/fixed_imu_1", debug_vis=True)
     # lights
     sky_light = AssetBaseCfg(
         prim_path="/World/skyLight",
@@ -123,42 +123,136 @@ class ObservationsCfg:
         """Observations for policy group."""
 
         # observation terms (order preserved)
-        base_lin_vel = ObsTerm(func=mdp.base_lin_vel, noise=Unoise(n_min=-0.1, n_max=0.1)) # might remove in the future, imu cannot measure lin_vel directly
+        base_lin_vel = ObsTerm(
+            func=mdp.base_lin_vel,
+            noise=Unoise(n_min=-0.1, n_max=0.1), 
+            clip=(-100.00, 100.00),
+            scale=1.0,
+        )
         base_ang_vel = ObsTerm(
             func=mdp.base_ang_vel,
-            # params={"asset_cfg": SceneEntityCfg("fixed_imu_1")}, 
-            noise=Unoise(n_min=-0.2, n_max=0.2))
-        imu_lin_acc = ObsTerm(
-            func=mdp.imu_lin_acc,
-            params={"asset_cfg": SceneEntityCfg("imu_sensor")},
-            noise=Unoise(n_min=-0.1, n_max=0.1),
-        )
-        imu_ang_vel = ObsTerm(
-            func=mdp.imu_ang_vel,
-            params={"asset_cfg": SceneEntityCfg("imu_sensor")},
             noise=Unoise(n_min=-0.2, n_max=0.2),
+            clip=(-100.0, 100.0),
+            scale=1.0,
         )
+        # imu_lin_acc = ObsTerm(
+        #     func=mdp.imu_lin_acc,
+        #     params={"asset_cfg": SceneEntityCfg("imu_sensor")},
+        #     noise=Unoise(n_min=-0.1, n_max=0.1),
+        # )
+        # imu_ang_vel = ObsTerm(
+        #     func=mdp.imu_ang_vel,
+        #     params={"asset_cfg": SceneEntityCfg("imu_sensor")},
+        #     noise=Unoise(n_min=-0.2, n_max=0.2),
+        # )
         projected_gravity = ObsTerm(
             func=mdp.projected_gravity,
             noise=Unoise(n_min=-0.05, n_max=0.05),
+            clip=(-100.0, 100.0),
+            scale=1.0,
         )
-        velocity_commands = ObsTerm(func=mdp.generated_commands, params={"command_name": "base_velocity"})
-        joint_pos = ObsTerm(func=mdp.joint_pos_rel, noise=Unoise(n_min=-0.01, n_max=0.01))
-        joint_vel = ObsTerm(func=mdp.joint_vel_rel, noise=Unoise(n_min=-1.5, n_max=1.5))
-        actions = ObsTerm(func=mdp.last_action)
+        velocity_commands = ObsTerm(
+            func=mdp.generated_commands, 
+            params={"command_name": "base_velocity"},
+            clip=(-100.0, 100.0),
+            scale=1.0,
+        )
+        joint_pos = ObsTerm(
+            func=mdp.joint_pos_rel,
+            params={"asset_cfg": SceneEntityCfg("robot", joint_names=".*", preserve_order=True)},
+            noise=Unoise(n_min=-0.01, n_max=0.01),
+            clip=(-100.0, 100.0),
+            scale=1.0, 
+        )
+        joint_vel = ObsTerm(
+            func=mdp.joint_vel_rel,
+            params={"asset_cfg": SceneEntityCfg("robot", joint_names=".*", preserve_order=True)},
+            noise=Unoise(n_min=-1.5, n_max=1.5),
+            clip=(-100.0, 100.0),
+            scale=1.0,
+        )
+        actions = ObsTerm(
+            func=mdp.last_action,
+            clip=(-100.0, 100.0),
+            scale=1.0,
+        )
         height_scan = ObsTerm(
             func=mdp.height_scan,
             params={"sensor_cfg": SceneEntityCfg("height_scanner")},
             noise=Unoise(n_min=-0.1, n_max=0.1),
-            clip=(-1.0, 1.0),
+            clip=(-100.0, 100.0),   
         )
 
         def __post_init__(self):
             self.enable_corruption = True
             self.concatenate_terms = True
+    
+    @configclass
+    class CriticCfg(ObsGroup):
+        """Observations for critic group"""
+
+        # observation terms (order preserved)
+        base_lin_vel = ObsTerm(
+            func=mdp.base_lin_vel, 
+            clip=(-100.00, 100.00),
+            scale=1.0,
+        )
+        base_ang_vel = ObsTerm(
+            func=mdp.base_ang_vel,
+            clip=(-100.0, 100.0),
+            scale=1.0,
+        )
+        # imu_lin_acc = ObsTerm(
+        #     func=mdp.imu_lin_acc,
+        #     params={"asset_cfg": SceneEntityCfg("imu_sensor")},
+        #     noise=Unoise(n_min=-0.1, n_max=0.1),
+        # )
+        # imu_ang_vel = ObsTerm(
+        #     func=mdp.imu_ang_vel,
+        #     params={"asset_cfg": SceneEntityCfg("imu_sensor")},
+        #     noise=Unoise(n_min=-0.2, n_max=0.2),
+        # )
+        projected_gravity = ObsTerm(
+            func=mdp.projected_gravity,
+            clip=(-100.0, 100.0),
+            scale=1.0,
+        )
+        velocity_commands = ObsTerm(
+            func=mdp.generated_commands, 
+            params={"command_name": "base_velocity"},
+            clip=(-100.0, 100.0),
+            scale=1.0,
+        )
+        joint_pos = ObsTerm(
+            func=mdp.joint_pos_rel,
+            params={"asset_cfg": SceneEntityCfg("robot", joint_names=".*", preserve_order=True)},
+            clip=(-100.0, 100.0),
+            scale=1.0, 
+        )
+        joint_vel = ObsTerm(
+            func=mdp.joint_vel_rel,
+           params={"asset_cfg": SceneEntityCfg("robot", joint_names=".*", preserve_order=True)},
+            clip=(-100.0, 100.0),
+            scale=1.0,
+        )
+        actions = ObsTerm(
+            func=mdp.last_action,
+            clip=(-100.0, 100.0),
+            scale=1.0,
+        )
+        height_scan = ObsTerm(
+            func=mdp.height_scan,
+            params={"sensor_cfg": SceneEntityCfg("height_scanner")},
+            clip=(-100.0, 100.0),
+        )
+
+        def __post_init__(self):
+            self.enable_corruption = False
+            self.concatenate_terms = True
 
     # observation groups
     policy: PolicyCfg = PolicyCfg()
+    critic: CriticCfg = CriticCfg()
 
 
 @configclass
@@ -230,6 +324,18 @@ class EventCfg:
         params={
             "position_range": (0.5, 1.5),
             "velocity_range": (0.0, 0.0),
+        },
+    )
+
+    randomize_actuator_gains = EventTerm(
+        func=mdp.randomize_actuator_gains,
+        mode="reset",
+        params={
+            "asset_cfg": SceneEntityCfg("robot", joint_names=".*"),
+            "stiffness_distribution_params": (0.5, 2.0),
+            "damping_distribution_params": (0.5, 2.0),
+            "operation": "scale",
+            "distribution": "uniform",
         },
     )
 
@@ -342,3 +448,49 @@ class LocomotionVelocityRoughEnvCfg(ManagerBasedRLEnvCfg):
         else:
             if self.scene.terrain.terrain_generator is not None:
                 self.scene.terrain.terrain_generator.curriculum = False
+
+def create_obsgroup_class(class_name, terms, enable_corruption=False, concatenate_terms=True):
+    """
+    Dynamically create and register a ObsGroup class based on the given configuration terms.
+
+    :param class_name: Name of the configuration class.
+    :param terms: Configuration terms, a dictionary where keys are term names and values are term content.
+    :param enable_corruption: Whether to enable corruption for the observation group. Defaults to False.
+    :param concatenate_terms: Whether to concatenate the observation terms in the group. Defaults to True.
+    :return: The dynamically created class.
+    """
+    # Dynamically determine the module name
+    module_name = inspect.getmodule(inspect.currentframe()).__name__
+
+    # Define the post-init function
+    def post_init_wrapper(self):
+        setattr(self, "enable_corruption", enable_corruption)
+        setattr(self, "concatenate_terms", concatenate_terms)
+
+    # Dynamically create the class using ObsGroup as the base class
+    terms["__post_init__"] = post_init_wrapper
+    dynamic_class = configclass(type(class_name, (ObsGroup,), terms))
+
+    # Custom serialization and deserialization
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+
+    # Add custom serialization methods to the class
+    dynamic_class.__getstate__ = __getstate__
+    dynamic_class.__setstate__ = __setstate__
+
+    # Place the class in the global namespace for accessibility
+    globals()[class_name] = dynamic_class
+
+    # Register the dynamic class in the module's dictionary
+    if module_name in sys.modules:
+        sys.modules[module_name].__dict__[class_name] = dynamic_class
+    else:
+        raise ImportError(f"Module {module_name} not found.")
+
+    # Return the class for external instantiation
+    return dynamic_class
