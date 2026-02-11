@@ -20,8 +20,10 @@ class HanuA3RoughPPORunnerCfg(RslRlOnPolicyRunnerCfg):
     empirical_normalization = False
     policy = RslRlPpoActorCriticCfg(
         init_noise_std=1.0,
-        actor_hidden_dims=[512, 128, 128],
-        critic_hidden_dims=[512, 128, 128],
+        actor_obs_normalization=False,
+        critic_obs_normalization=False,
+        actor_hidden_dims=[512, 256, 128],
+        critic_hidden_dims=[512, 256, 128],
         activation="elu",
     )
     algorithm = RslRlPpoAlgorithmCfg(
@@ -39,7 +41,18 @@ class HanuA3RoughPPORunnerCfg(RslRlOnPolicyRunnerCfg):
         max_grad_norm=1.0,
     )
 
+#class HanuA3FlatPPORunnerCfg(HanuA3RoughPPORunnerCfg):
+#    def __post_init__(self):
+#        super().__post_init__()
 
+#        self.max_iterations = 1500
+   #      self.save_interval = 1000
+     #    self.experiment_name = "hanu_a3_flat"
+    #     self.policy.actor_hidden_dims = [256, 128, 128]
+     #    self.policy.critic_hidden_dims = [256, 128, 128]
+
+
+@configclass
 class HanuA3FlatPPORunnerCfg(HanuA3RoughPPORunnerCfg):
     def __post_init__(self):
         super().__post_init__()
@@ -47,13 +60,25 @@ class HanuA3FlatPPORunnerCfg(HanuA3RoughPPORunnerCfg):
         self.max_iterations = 1500
         self.save_interval = 1000
         self.experiment_name = "hanu_a3_flat"
-        self.policy.actor_hidden_dims = [256, 128, 128]
-        self.policy.critic_hidden_dims = [256, 128, 128]
+
+        # MATCH checkpoint arch (2 layers)
+        self.policy.actor_hidden_dims = [512, 128, 128]
+        self.policy.critic_hidden_dims = [512, 128, 128]
+
+
 
 @configclass
 class HanuA3RoughWarmstartFromFlatPPORunnerCfg(HanuA3RoughPPORunnerCfg):
     def __post_init__(self):
         super().__post_init__()
+        self.policy.actor_hidden_dims = [512, 128, 128]
+        self.policy.critic_hidden_dims = [512, 128, 128]
+    
+
+# @configclass
+# class HanuA3RoughWarmstartFromFlatPPORunnerCfg(HanuA3RoughPPORunnerCfg):
+ #    def __post_init__(self):
+  #       super().__post_init__()
         # force same architecture as Flat checkpoint
-        self.policy.actor_hidden_dims = [256, 128, 128]
-        self.policy.critic_hidden_dims = [256, 128, 128]
+   #      self.policy.actor_hidden_dims = [256, 128, 128]
+   #      self.policy.critic_hidden_dims = [256, 128, 128]

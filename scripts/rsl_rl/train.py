@@ -189,7 +189,28 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
 
     # wrap around environment for rsl-rl
     env = RslRlVecEnvWrapper(env, clip_actions=agent_cfg.clip_actions)
+    
 
+    ###
+    # ---- debug obs dims ----
+    print("obs_space:", env.observation_space)
+    try:
+        base_env = getattr(env, "unwrapped", None) or getattr(env, "env", None) or env
+        om = getattr(base_env, "observation_manager", None)
+        if om is not None and hasattr(om, "group_obs_dims"):
+            print("group_obs_dims:", om.group_obs_dims)
+            if "policy" in om.group_obs_dims:
+                    print("policy obs dim:", om.group_obs_dims["policy"])
+        else:
+            print("No observation_manager/group_obs_dims found (env type may differ).")
+    except Exception as e:
+        print("obs dim debug error:", e)
+    
+    print("obs_space:", env.observation_space, flush=True)
+    if hasattr(env.observation_space, "shape") and env.observation_space.shape is not None:
+        print("obs_dim(Box):", env.observation_space.shape[0], flush=True)
+
+####
     # create runner from rsl-rl
     if agent_cfg.class_name == "OnPolicyRunner":
         runner = OnPolicyRunner(env, agent_cfg.to_dict(), log_dir=log_dir, device=agent_cfg.device)
@@ -214,7 +235,6 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
 
     # close the simulator
     env.close()
-
 
 if __name__ == "__main__":
     # run the main function

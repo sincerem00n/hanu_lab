@@ -2,7 +2,7 @@
 # All rights reserved.
 
 # SPDX-License-Identifier: BSD-3-Clause
-
+from __future__ import annotations
 import math
 
 # import isaacsim.asset.importer.urdf
@@ -112,6 +112,31 @@ class HanuA3RewardsCfg(RewardsCfg):
             )
         },
     )
+
+    joint_vel_neck = RewTerm(
+        func=mdp.joint_vel_l2,
+        weight=-0.1,
+        params={
+            "asset_cfg": SceneEntityCfg(
+                "robot",
+                joint_names=[
+                    ".*_neck_.*",
+                ],
+            )
+        },
+    )
+    joint_vel_legs = RewTerm(
+        func=mdp.joint_vel_l2,
+        weight=-0.1,
+        params={
+            "asset_cfg": SceneEntityCfg(
+                "robot",
+                joint_names=[
+                    ".*_hip_yaw",
+                ],
+            )
+        },
+    )
     joint_deviation_neck = RewTerm(
         func=mdp.joint_deviation_l1,
         weight=-0.1,
@@ -124,34 +149,33 @@ class HanuA3RewardsCfg(RewardsCfg):
             )
         },
     )
-    # Fair add #
-    # ----- knee pose shaping (keep knees near reference pose)
-    knee_pose_deviation = RewTerm(
-        func=mdp.joint_deviation_l1,
-        weight=-0.08,   
+
+    # New #
+        
+#    feet_step_sequence = RewTerm(
+#        func=mdp.feet_step_sequence_biped,
+#        weight=0.1,
+#        params={
+#            "sensor_cfg": SceneEntityCfg(
+#                "contact_forces",
+#                body_names=“.*_foot.*”,
+#                preserve_order=True,
+#            ),
+#            "command_name": "base_velocity",
+#        },
+#    )
+
+
+    feet_air_time_penalty = RewTerm(
+        func=mdp.feet_air_time_negative_biped,
+        weight=-0.05, 
         params={
-            "asset_cfg": SceneEntityCfg(
-                "robot",
-                joint_names=[
-                    ".*_knee_.*",
-                ],
-            )
+            "sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*_foot_.*"),
+            "command_name": "base_velocity",
+            "threshold": 0.12,
         },
     )
 
-    knee_dof_pos_limits = RewTerm(
-        func=mdp.joint_pos_limits,
-        weight=-0.2,
-        params={
-            "asset_cfg": SceneEntityCfg(
-                "robot", 
-                joint_names=[
-                    ".*_knee_.*",
-                ]
-            )
-        },
-    )
-    
 
 @configclass
 class HanuA3TerminationsCfg(TerminationsCfg):
@@ -174,6 +198,7 @@ class HanuA3TerminationsCfg(TerminationsCfg):
     #         "minimum_height": 0.45
     #     }
     # )
+
 
 
 @configclass
@@ -214,6 +239,8 @@ class HanuA3EventsCfg(EventCfg):
         },
     )
 
+import math
+from isaaclab.utils import configclass
 
 @configclass
 class HanuA3RoughEnvCfg(LocomotionVelocityRoughEnvCfg):
@@ -228,10 +255,20 @@ class HanuA3RoughEnvCfg(LocomotionVelocityRoughEnvCfg):
         super().__post_init__()
 
         # ------ Scene configuration --------
+        # self.scene.robot = HANU_A3_CFG.replace(prim_path="{ENV_REGEX_NS}/robot")
+        # self.scene.height_scanner.prim_path = "/World/envs/env_.*/robot/hanu_a3/E1R_1"
+        # self.scene.contact_forces.prim_path = "{ENV_REGEX_NS}/robot/hanu_a3/.*"
+        # self.scene.imu_sensor.prim_path = "{ENV_REGEX_NS}/robot/hanu_a3/base_link"
+
+
+        # ------ Scene configuration --------
         self.scene.robot = HANU_A3_CFG.replace(prim_path="{ENV_REGEX_NS}/robot")
-        self.scene.height_scanner.prim_path = "/World/envs/env_.*/robot/hanu_a3/E1R_1"
+
+        if self.scene.height_scanner is not None:
+            self.scene.height_scanner.prim_path = "/World/envs/env_.*/robot/hanu_a3/E1R_1"
+
         self.scene.contact_forces.prim_path = "{ENV_REGEX_NS}/robot/hanu_a3/.*"
-        self.scene.imu_sensor.prim_path = "{ENV_REGEX_NS}/robot/hanu_a3/base_link"
+         # ------  
 
         self.scene.terrain.terrain_generator.sub_terrains["boxes"].grid_height_range = (0.0, 0.02)
         self.scene.terrain.terrain_generator.sub_terrains["random_rough"].noise_range = (0.0, 0.02)
@@ -286,9 +323,10 @@ class HanuA3RoughEnvCfg(LocomotionVelocityRoughEnvCfg):
         
 
         # ------ Commands configuration --------
-        self.commands.base_velocity.ranges.lin_vel_x = (-0.0, 0.0)
-        self.commands.base_velocity.ranges.lin_vel_y = (-0.0, 0.0) # (-1.0, 0.0)
-        self.commands.base_velocity.ranges.ang_vel_z = (-0.0, 0.0)
+        self.commands.base_velocity.ranges.lin_vel_x = (0.25, 0.55)
+        self.commands.base_velocity.ranges.lin_vel_y = (0.0, 0.0)
+        self.commands.base_velocity.ranges.ang_vel_z = (0.0, 0.0)
+        self.commands.base_velocity.rel_standing_envs = 0.0
         # self.commands.base_velocity.rel_standing_envs = 0.5
 
         # ------ Observations configuration --------
@@ -298,106 +336,158 @@ class HanuA3RoughEnvCfg(LocomotionVelocityRoughEnvCfg):
         self.terminations.base_contact.params["sensor_cfg"].body_names = "base_.*"
         # self.terminations.base_contact.params["sensor_cfg"].body_names = [f"^(?!.*{self.foot_link_name}).*"]
 
+
+# =============================================================================
+
+
+from isaaclab.utils import configclass
+
 @configclass
 class HanuA3RoughEnvCfgV0(HanuA3RoughEnvCfg):
-    """
-    Environment configuration for Hanumanoid A3 in rough terrain - Version 0.
-    Changes made in V0:
-    - No events
-    """
+
     def __post_init__(self):
         super().__post_init__()
-        tg = self.scene.terrain.terrain_generator  
-        tg.curriculum = None
-        keep = {"boxes", "random_rough"}
-        tg.sub_terrains = {k: v for k, v in tg.sub_terrains.items() if k in keep}
 
-        # ------ Events configuration --------
-        self.events.push_robot = None
-        self.events.add_base_mass = None
-        self.events.base_external_force_torque = None
-        self.events.base_com = None
-        self.scene.terrain.terrain_generator.curriculum = None
-        self.scene.height_scanner = None
+        # ==========================================================
+        # OBSERVATIONS CONFIGURATION
+        # ==========================================================
+        # Scale observations for stable learning
+        self.observations.policy.base_lin_vel.scale = 2.0
+        self.observations.policy.base_ang_vel.scale = 0.25
+        self.observations.policy.joint_pos.scale = 1.0
+        self.observations.policy.joint_vel.scale = 0.05
+
+        # Disable height scan to keep obs dim = 102
         self.observations.policy.height_scan = None
+        if self.observations.critic is not None:
+            self.observations.critic.height_scan = None
 
-        self.events.reset_robot_joints.params["position_range"] = (0.95, 1.05)
-        self.events.reset_robot_joints.params["velocity_range"] = (0.0, 0.0)
+        # ==========================================================
+        # ACTIONS CONFIGURATION
+        # ==========================================================
+        # Smaller action scale = smoother gait, less hopping
+        self.actions.joint_pos.scale = 0.25
+        self.actions.joint_pos.clip = {".*": (-100.0, 100.0)}
 
+        # ==========================================================
+        # EVENTS / DOMAIN RANDOMIZATION
+        # ==========================================================
+        # Randomize base mass slightly (robustness)
+        self.events.add_base_mass.params["asset_cfg"].body_names = "base_.*"
+        self.events.add_base_mass.params["mass_distribution_params"] = (-0.3, 0.8)
+
+        # Disable COM and external force randomization (stability)
+        self.events.base_com = None
+        self.events.base_external_force_torque = None
+
+        # Randomize joint reset slightly
+        self.events.reset_robot_joints.params["position_range"] = (0.8, 1.2)
+
+        # IMPORTANT:
+        # Do NOT randomize yaw at reset → prevents sideways walking illusion
         self.events.reset_base.params = {
-            "pose_range": {"x": (-0.25, 0.25), "y": (-0.25, 0.25), "yaw": (-3.14, 3.14)},
+            "pose_range": {
+                "x": (-0.5, 0.5),
+                "y": (-0.5, 0.5),
+                "yaw": (0.0, 0.0),   # keep heading straight
+            },
             "velocity_range": {
-                "x": (-0.15, 0.15),
-                "y": (-0.15, 0.15),
+                "x": (0.0, 0.0),
+                "y": (0.0, 0.0),
                 "z": (0.0, 0.0),
                 "roll": (0.0, 0.0),
                 "pitch": (0.0, 0.0),
-                "yaw": (-0.05, 0.05),
+                "yaw": (0.0, 0.0),
             },
         }
 
-        # ------- Rewards configuration --------
-        self.rewards.ankle_dof_pos_limits.weight = -0.2
-        self.rewards.feet_mirror.weight = -0.05
-        self.rewards.feet_air_time.weight = 0.05
-        self.rewards.feet_air_time.params["threshold"] = 0.2
-        self.rewards.upright_orientation.weight = 1.5
-        self.rewards.dof_torques_l2.weight = -5.0e-7
-        self.rewards.action_rate_l2.weight = -5.0e-5
-        self.commands.base_velocity.rel_standing_envs = 0.1
-
-
-        #self.rewards.feet_air_time.weight = 0.05
-        #self.rewards.feet_air_time.params["threshold"] = 0.25
-
-        self.rewards.feet_slide.weight = -0.25
-
-        #self.rewards.dof_torques_l2.weight = -5.0e-7
-        #self.rewards.action_rate_l2.weight = -5.0e-5
-
-        self.rewards.track_lin_vel_xy_exp.weight = 1.5
-        self.rewards.track_ang_vel_z_exp.weight = 0.6
-        self.rewards.track_ang_vel_z_exp.params["std"] = 0.5
-
-        #self.rewards.upright_orientation.weight = 1.5
-        # self.rewards.feet_mirror.weight = -0.12
-
-        # knee shaping
-        #self.rewards.knee_pose_deviation.weight = -0.08
-        self.rewards.knee_dof_pos_limits.weight = -0.2
-
-        # ------ Commands configuration --------
-        self.commands.base_velocity.ranges.lin_vel_x = (0.0, 0.0)
-        self.commands.base_velocity.ranges.lin_vel_y = (0.2, 0.6) # jing: robot facing (+)y-axis
+        # ==========================================================
+        # COMMANDS CONFIGURATION
+        # ==========================================================
+        self.commands.base_velocity.ranges.lin_vel_y = (-0.0, 1.0) # (-1.0, 0.0)
+        self.commands.base_velocity.ranges.ang_vel_z = (-0.5, 0.5)
         self.commands.base_velocity.ranges.ang_vel_z = (0.0, 0.0)
 
-        # ------ Terminations configuration --------
-        self.terminations.base_contact.params["sensor_cfg"].body_names = "base_.*"
+        # No standing environments
+        self.commands.base_velocity.rel_standing_envs = 0.0
 
+        # ==========================================================
+        # REWARDS CONFIGURATION
+        # ==========================================================
+
+        # --- Tracking rewards (main objective) ---
+        self.rewards.track_lin_vel_xy_exp.weight = 1.5
+        self.rewards.track_ang_vel_z_exp.weight = 1.0
+
+        # --- Upright posture ---
+        self.rewards.upright_orientation.weight = 3.0
+
+        # --- Anti-hopping / anti-jumping ---
+        self.rewards.lin_vel_z_l2.weight = -1.0      # penalize vertical motion
+        self.rewards.ang_vel_xy_l2.weight = -0.2     # penalize roll & pitch rates
+
+        # Reduce incentive to keep feet in the air
+        self.rewards.feet_air_time.weight = 0.05
+        self.rewards.feet_air_time.params["threshold"] = 0.15
+
+        # --- Foot behavior ---
+        self.rewards.feet_slide.weight = -0.4
+        self.rewards.feet_mirror.weight = -0.0
+
+        # --- Smoothness penalties ---
+        self.rewards.action_rate_l2.weight = -0.002
+        self.rewards.joint_vel_legs.weight = -0.15
+        self.rewards.joint_vel_neck.weight = -0.2
+
+        # --- Joint safety / realism ---
+        self.rewards.ankle_dof_pos_limits.weight = -1.0
+        self.rewards.knee_pose_deviation.weight = -0.08
+        self.rewards.knee_dof_pos_limits.weight = -0.2
+        self.rewards.joint_deviation_arms.weight = -0.1
+        self.rewards.joint_deviation_neck.weight = -0.1
+
+        # --- Termination penalty ---
+        self.rewards.termination_penalty.weight = -200.0
+
+        # ==========================================================
+        # TERMINATIONS CONFIGURATION
+        # ==========================================================
+        # Terminate when non-foot body parts touch the ground
+        self.terminations.base_contact.params["sensor_cfg"].body_names = [
+            f"^(?!.*{self.foot_link_name}).*"
+        ]
+
+
+# ------------------------------------------------------------------------------------------
+
+from isaaclab.utils import configclass
 
 @configclass
 class HanuA3RoughEnvCfgV1(HanuA3RoughEnvCfg):
-    """
-    Environment configuration for Hanumanoid A3 in rough terrain - Version 1.
-    Changes made in V1:
-    - Add events
-    """
+
     def __post_init__(self):
         super().__post_init__()
+
+        # ------ Observations configuration --------
+        self.observations.policy.base_lin_vel.scale = 2.0
+        self.observations.policy.base_ang_vel.scale = 0.25
+        self.observations.policy.joint_pos.scale = 1.0
+        self.observations.policy.joint_vel.scale = 0.05
+
+        # Disable unused observations
+        self.observations.policy.base_lin_vel = None
+        self.observations.policy.height_scan = None
+
+        # ------ Actions configuration --------
+        self.actions.joint_pos.scale = 0.25
+        self.actions.joint_pos.clip = {".*": (-100.0, 100.0)}
 
         # ------ Events configuration --------
         self.events.add_base_mass.params["asset_cfg"].body_names = "base_.*"
         self.events.add_base_mass.params["mass_distribution_params"] = (-0.5, 1.5)
-        # self.events.base_com.params["asset_cfg"].body_names = "base_.*"
-        # self.events.base_com.params["com_range"] = {
-        #     "x": (-0.05, 0.05), 
-        #     "y": (-0.05, 0.05), 
-        #     "z": (-0.01, 0.01)
-        # }
-        self.events.base_com = None  # disabling for now hanu_rough
-        # self.events.base_external_force_torque.params["asset_cfg"].body_names = "base_.*"
-        # self.events.base_external_force_torque.params["force_range"] = (-0.75, 1.25)
-        self.events.base_external_force_torque = None  # disabling for now hanu_rough
+
+        self.events.base_com = None
+        self.events.base_external_force_torque = None
 
         self.events.reset_robot_joints.params["position_range"] = (0.5, 1.5)
         self.events.reset_base.params = {
@@ -413,19 +503,29 @@ class HanuA3RoughEnvCfgV1(HanuA3RoughEnvCfg):
         }
 
         # ------- Rewards configuration --------
-        self.rewards.track_lin_vel_xy_exp.weight = 3.0
+        self.rewards.track_lin_vel_xy_exp.weight = 1.5
         self.rewards.feet_air_time.weight = 1.0
-        self.rewards.feet_air_time.params["threshold"] = 0.6
-        self.rewards.feet_slide.weight = -0.2
-        self.rewards.feet_mirror.weight = -1.0
-        
+        self.rewards.feet_air_time.params["threshold"] = 0.18
+        self.rewards.feet_slide.weight = -0.1
+        self.rewards.feet_mirror.weight = -0.0
         self.rewards.action_rate_l2.weight = -0.005
+
+        #self.rewards.knee_pose_deviation.weight = -0.0
+        #self.rewards.knee_dof_pos_limits.weight = -0.0
+        self.rewards.joint_vel_legs.weight = -0.3
+        self.rewards.joint_vel_neck.weight = -0.5
+
+        # ---- Added gait rewards only ----
+        #self.rewards.feet_step_sequence.weight = 0.4
+        self.rewards.feet_air_time_penalty.weight = -0.03
+        self.rewards.feet_air_time_penalty.params["threshold"] = 0.28
 
         # ------ Commands configuration --------
         self.commands.base_velocity.ranges.lin_vel_y = (-0.0, 1.0) # (-1.0, 0.0)
         self.commands.base_velocity.ranges.ang_vel_z = (-0.5, 0.5)
-        self.commands.base_velocity.rel_standing_envs = 0.1
+        self.commands.base_velocity.rel_standing_envs = 0.3
 
         # ------ Terminations configuration --------
         # self.terminations.base_contact.params["sensor_cfg"].body_names = "base_.*"
         self.terminations.base_contact.params["sensor_cfg"].body_names = [f"^(?!.*{self.foot_link_name}).*"]
+

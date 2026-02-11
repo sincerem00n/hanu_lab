@@ -28,6 +28,18 @@ gym.register(
 )
 
 gym.register(
+    id="Isaac-Velocity-Rough-Hanu-A3-v0_5",
+    entry_point="isaaclab.envs:ManagerBasedRLEnv",
+    disable_env_checker=True,
+    kwargs={
+        "env_cfg_entry_point": f"{__name__}.rough_env_cfg:HanuA3RoughEnvCfgV0_5",
+        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:HanuA3RoughWarmstartFromFlatPPORunnerCfg",
+        "skrl_cfg_entry_point": f"{agents.__name__}:skrl_rough_ppo_cfg.yaml",
+    },
+)
+
+
+gym.register(
     id="Isaac-Velocity-Flat-Hanu-A3-v0",
     entry_point="isaaclab.envs:ManagerBasedRLEnv",
     disable_env_checker=True,

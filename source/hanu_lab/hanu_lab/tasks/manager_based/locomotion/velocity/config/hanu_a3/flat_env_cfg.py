@@ -22,6 +22,9 @@ class HanuA3FlatEnvCfgV0(HanuA3RoughEnvCfgV0):
 
         self.curriculum.terrain_levels = None
 
+
+from isaaclab.utils import configclass
+
 @configclass
 class HanuA3FlatEnvCfgV1(HanuA3RoughEnvCfgV1):
     """Configuration for the flat environment in the RAI Hanumanoid project. -- Version 1."""
@@ -31,7 +34,8 @@ class HanuA3FlatEnvCfgV1(HanuA3RoughEnvCfgV1):
         self.scene.terrain.terrain_type = "plane"
         self.scene.terrain.terrain_generator = None
 
-        self.scene.height_scanner = None
-        self.observations.policy.height_scan = None
+        #self.scene.height_scanner = None
+        #self.observations.policy.height_scan = None
+        #self.observations.critic.height_scan = None
 
         self.curriculum.terrain_levels = None

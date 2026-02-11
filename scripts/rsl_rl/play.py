@@ -116,7 +116,15 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     env_cfg.log_dir = log_dir
 
     # create isaac environment
+    # create isaac environment
     env = gym.make(args_cli.task, cfg=env_cfg, render_mode="rgb_array" if args_cli.video else None)
+    # DEBUG: check observation dimension
+    try:
+        om = env.unwrapped.observation_manager
+        print("[DEBUG] obs group dims:", om.group_obs_dim)
+    except Exception as e:
+        print("[DEBUG] obs dim check error:", e)
+
 
     # convert to single-agent instance if required by the RL algorithm
     if isinstance(env.unwrapped, DirectMARLEnv):
@@ -137,6 +145,27 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     # wrap around environment for rsl-rl
     env = RslRlVecEnvWrapper(env, clip_actions=agent_cfg.clip_actions)
 
+    # DEBUG: print obs structure BEFORE loading checkpoint
+    obs = env.reset()
+    if isinstance(obs, tuple):
+        obs = obs[0]
+
+    print("\n========== PLAY OBS DEBUG ==========")
+    print("type(obs):", type(obs))
+
+    # TensorDict / dict-like
+    if hasattr(obs, "keys"):
+        print("keys:", list(obs.keys()))
+        if "policy" in obs:
+            print("obs['policy'].shape:", obs["policy"].shape)   # expect (num_envs, 512)
+            print("obs_dim:", obs["policy"].shape[-1])
+    else:
+    # plain tensor case
+        print("obs.shape:", obs.shape)
+
+    print("====================================\n", flush=True)
+
+
     print(f"[INFO]: Loading model checkpoint from: {resume_path}")
     # load previously trained model
     if agent_cfg.class_name == "OnPolicyRunner":
@@ -145,8 +174,27 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
         runner = DistillationRunner(env, agent_cfg.to_dict(), log_dir=None, device=agent_cfg.device)
     else:
         raise ValueError(f"Unsupported runner class: {agent_cfg.class_name}")
-    runner.load(resume_path)
+    #runner.load(resume_path)
+    # --- custom partial load to bypass obs-dim mismatch ---
+    ckpt = torch.load(resume_path, map_location="cpu")
+    state = ckpt["model_state_dict"]
 
+    current = runner.alg.policy.state_dict()
+    filtered = {}
+    skipped = []
+
+    for k, v in state.items():
+        if k in current and current[k].shape == v.shape:
+            filtered[k] = v
+        else:
+            skipped.append((k, tuple(v.shape), tuple(current[k].shape) if k in current else None))
+
+    runner.alg.policy.load_state_dict(filtered, strict=False)
+
+    print("[DEBUG] Loaded params:", len(filtered))
+    print("[DEBUG] Skipped params (shape mismatch):", len(skipped))
+    for s in skipped[:10]:
+        print("[DEBUG] skipped:", s)
     # obtain the trained policy for inference
     policy = runner.get_inference_policy(device=env.unwrapped.device)
 
@@ -177,31 +225,72 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     # reset environment
     obs = env.get_observations()
     timestep = 0
+    dt = env.unwrapped.step_dt
+
     # simulate environment
     while simulation_app.is_running():
         start_time = time.time()
-        # run everything in inference mode
+
         with torch.inference_mode():
-            # agent stepping
             actions = policy(obs)
-            # env stepping
             obs, _, dones, _ = env.step(actions)
-            # reset recurrent states for episodes that have terminated
             policy_nn.reset(dones)
-        if args_cli.video:
-            timestep += 1
-            # Exit the play loop after recording one video
-            if timestep == args_cli.video_length:
-                break
+
+        # -------------------------------
+        # DEBUG: print command + velocities (every 200 steps)
+        # -------------------------------
+        if timestep % 200 == 0:
+            base_env = env.unwrapped
+
+            # 1) commanded velocity (vx, vy, wz)
+            try:
+                cmd = base_env.command_manager.get_command("base_velocity")
+                print("[DBG] cmd base_velocity env0:", cmd[0].tolist())
+            except Exception as e:
+                print("[DBG] cmd read error:", e)
+
+            # 2) actual base linear velocity (world frame)
+            try:
+                v_w = base_env.scene["robot"].data.root_lin_vel_w
+                print("[DBG] root_lin_vel_w env0:", v_w[0].tolist())
+            except Exception as e:
+                print("[DBG] vel_w read error:", e)
+
+            # 3) actual base linear velocity (body frame)  <<< สำคัญสุด
+            try:
+                v_b = base_env.scene["robot"].data.root_lin_vel_b
+                print("[DBG] root_lin_vel_b env0:", v_b[0].tolist())
+            except Exception as e:
+                print("[DBG] vel_b read error:", e)
+
+            # 4) projected gravity (tilt check)
+            try:
+                g = base_env.scene["robot"].data.projected_gravity_b
+                print("[DBG] projected_gravity_b env0:", g[0].tolist())
+            except Exception as e:
+                print("[DBG] gravity read error:", e)
+
+        timestep += 1
+
+        # Exit the play loop after recording one video
+        if args_cli.video and timestep >= args_cli.video_length:
+            break
 
         # time delay for real-time evaluation
         sleep_time = dt - (time.time() - start_time)
         if args_cli.real_time and sleep_time > 0:
             time.sleep(sleep_time)
+            
+    base_env = env.unwrapped
+    cmd = base_env.command_manager.get_command("base_velocity")[0]
+    v_w = base_env.scene["robot"].data.root_lin_vel_w[0]
+    v_b = base_env.scene["robot"].data.root_lin_vel_b[0]
+    print("[DBG] FINAL cmd:", cmd.tolist())
+    print("[DBG] FINAL lin_vel_w:", v_w.tolist())
+    print("[DBG] FINAL lin_vel_b:", v_b.tolist())
 
-    # close the simulator
+# close the simulator
     env.close()
-
 
 if __name__ == "__main__":
     # run the main function
