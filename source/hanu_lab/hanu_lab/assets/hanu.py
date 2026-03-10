@@ -695,6 +695,7 @@ HANU_A4_CFG = ArticulationCfg(
                 ".*_knee_.*",
             ],
             effort_limit=300.0,
+            velocity_limit=0.628,
             stiffness={
                 ".*_hip_yaw": 200.0,
                 ".*_hip_roll": 200.0,
@@ -708,6 +709,7 @@ HANU_A4_CFG = ArticulationCfg(
                 ".*_ankle_.*",
             ],
             effort_limit=20.0,
+            velocity_limit=0.628,
             stiffness=20.0,
             damping=2.0,
         ),
@@ -717,6 +719,7 @@ HANU_A4_CFG = ArticulationCfg(
                 ".*_elbow_.*",
             ],
             effort_limit=300.0,
+            velocity_limit=0.628,
             stiffness=40.0,
             damping=10.0,
         ),
@@ -729,6 +732,7 @@ HANU_A4_CFG = ArticulationCfg(
 
             ],
             effort_limit=300.0,
+            velocity_limit=0.628,
             stiffness=40.0,
             damping=10.0,
         ),
