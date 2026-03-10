@@ -12,7 +12,7 @@ from pxr import UsdPhysics
 ###########################
 # Pre-defined configs
 ###########################
-from hanu_lab.assets import HANU_A3_CFG
+from hanu_lab.assets import HANU_A4_CFG
 
 
 from isaaclab.managers import RewardTermCfg as RewTerm
@@ -27,7 +27,7 @@ from hanu_lab.tasks.manager_based.locomotion.velocity.velocity_env_cfg import Lo
 
 
 @configclass
-class HanuA3RewardsCfg(RewardsCfg):
+class HanuA4RewardsCfg(RewardsCfg):
     termination_penalty = RewTerm(func=mdp.is_terminated, weight=-200.0)
     feet_air_time = RewTerm(
         func=mdp.feet_air_time_positive_biped,
@@ -197,7 +197,7 @@ class HanuA3RewardsCfg(RewardsCfg):
 
 
 @configclass
-class HanuA3TerminationsCfg(TerminationsCfg):
+class HanuA4TerminationsCfg(TerminationsCfg):
     time_out = DoneTerm(func=mdp.time_out, time_out=True)
     base_contact = DoneTerm(
         func=mdp.illegal_contact,
@@ -221,8 +221,8 @@ class HanuA3TerminationsCfg(TerminationsCfg):
 
 
 @configclass
-class HanuA3EventsCfg(EventCfg):
-    """Events configuration for Hanumanoid A3."""
+class HanuA4EventsCfg(EventCfg):
+    """Events configuration for Hanumanoid A4."""
     base_external_force_torque = EventTerm(
         func=mdp.apply_external_force_torque,
         mode="reset",
@@ -262,11 +262,11 @@ import math
 from isaaclab.utils import configclass
 
 @configclass
-class HanuA3RoughEnvCfg(LocomotionVelocityRoughEnvCfg):
-    """Environment configuration for Hanumanoid A3 in rough terrain."""
+class HanuA4RoughEnvCfg(LocomotionVelocityRoughEnvCfg):
+    """Environment configuration for Hanumanoid A4 in rough terrain."""
 
-    rewards: HanuA3RewardsCfg = HanuA3RewardsCfg()
-    terminations: HanuA3TerminationsCfg = HanuA3TerminationsCfg()
+    rewards: HanuA4RewardsCfg = HanuA4RewardsCfg()
+    terminations: HanuA4TerminationsCfg = HanuA4TerminationsCfg()
 
     foot_link_name = ".*_foot_.*"
 
@@ -274,19 +274,19 @@ class HanuA3RoughEnvCfg(LocomotionVelocityRoughEnvCfg):
         super().__post_init__()
 
         # ------ Scene configuration --------
-        # self.scene.robot = HANU_A3_CFG.replace(prim_path="{ENV_REGEX_NS}/robot")
-        # self.scene.height_scanner.prim_path = "/World/envs/env_.*/robot/hanu_a3/E1R_1"
-        # self.scene.contact_forces.prim_path = "{ENV_REGEX_NS}/robot/hanu_a3/.*"
-        # self.scene.imu_sensor.prim_path = "{ENV_REGEX_NS}/robot/hanu_a3/base_link"
+        # self.scene.robot = HANU_A4_CFG.replace(prim_path="{ENV_REGEX_NS}/robot")
+        # self.scene.height_scanner.prim_path = "/World/envs/env_.*/robot/hanu_a4/E1R_1"
+        # self.scene.contact_forces.prim_path = "{ENV_REGEX_NS}/robot/hanu_a4/.*"
+        # self.scene.imu_sensor.prim_path = "{ENV_REGEX_NS}/robot/hanu_a4/base_link"
 
 
         # ------ Scene configuration --------
-        self.scene.robot = HANU_A3_CFG.replace(prim_path="{ENV_REGEX_NS}/robot")
+        self.scene.robot = HANU_A4_CFG.replace(prim_path="{ENV_REGEX_NS}/robot")
 
         if self.scene.height_scanner is not None:
-            self.scene.height_scanner.prim_path = "/World/envs/env_.*/robot/hanu_a3/E1R_1"
+            self.scene.height_scanner.prim_path = "/World/envs/env_.*/robot/hanu_a4/E1R_1"
 
-        self.scene.contact_forces.prim_path = "{ENV_REGEX_NS}/robot/hanu_a3/.*"
+        self.scene.contact_forces.prim_path = "{ENV_REGEX_NS}/robot/hanu_a4/.*"
          # ------  
 
         self.scene.terrain.terrain_generator.sub_terrains["boxes"].grid_height_range = (0.0, 0.02)
@@ -362,7 +362,7 @@ class HanuA3RoughEnvCfg(LocomotionVelocityRoughEnvCfg):
 from isaaclab.utils import configclass
 
 @configclass
-class HanuA3RoughEnvCfgV0(HanuA3RoughEnvCfg):
+class HanuA4RoughEnvCfgV0(HanuA4RoughEnvCfg):
 
     def __post_init__(self):
         super().__post_init__()
@@ -377,7 +377,6 @@ class HanuA3RoughEnvCfgV0(HanuA3RoughEnvCfg):
         self.observations.policy.joint_vel.scale = 0.05
 
         self.observations.policy.height_scan = None
-        self.observations.policy.base_lin_vel = None
 
         # ==========================================================
         # ACTIONS CONFIGURATION
@@ -432,11 +431,9 @@ class HanuA3RoughEnvCfgV0(HanuA3RoughEnvCfg):
         self.rewards.feet_air_time_penalty.weight = -0.01
         self.rewards.feet_air_time_penalty.params["threshold"] = 0.22
 
-        self.rewards.feet_lateral_sep_reward.weight = 0.15
-        self.rewards.feet_lateral_sep_reward.params["threshold"] = 0.15
-        self.rewards.feet_lateral_sep_reward.params["margin"] = 0.02
+        self.rewards.feet_lateral_sep_reward.weight = None
 
-        self.rewards.feet_slide.weight = -0.6
+        self.rewards.feet_slide.weight = -0.4
         self.rewards.feet_mirror.weight = -0.02
 
         self.rewards.action_rate_l2.weight = -0.01
@@ -449,7 +446,7 @@ class HanuA3RoughEnvCfgV0(HanuA3RoughEnvCfg):
         self.rewards.joint_deviation_arms.weight = -0.05
         self.rewards.joint_deviation_neck.weight = -0.05
 
-        self.rewards.feet_step_sequence.weight = 0.25
+        self.rewards.feet_step_sequence.weight = None
 
         # --- Termination penalty ---
         self.rewards.termination_penalty.weight = -200.0
@@ -468,7 +465,7 @@ class HanuA3RoughEnvCfgV0(HanuA3RoughEnvCfg):
 from isaaclab.utils import configclass
 
 @configclass
-class HanuA3RoughEnvCfgV1(HanuA3RoughEnvCfg):
+class HanuA4RoughEnvCfgV1(HanuA4RoughEnvCfg):
 
     def __post_init__(self):
         super().__post_init__()
@@ -511,7 +508,7 @@ class HanuA3RoughEnvCfgV1(HanuA3RoughEnvCfg):
         self.rewards.track_lin_vel_xy_exp.weight = 1.5
         self.rewards.feet_air_time.weight = 1.0
         self.rewards.feet_air_time.params["threshold"] = 0.18
-        self.rewards.feet_slide.weight = -0.2
+        self.rewards.feet_slide.weight = -0.1
         self.rewards.feet_mirror.weight = -0.0
         self.rewards.action_rate_l2.weight = -0.005
 
@@ -521,9 +518,9 @@ class HanuA3RoughEnvCfgV1(HanuA3RoughEnvCfg):
         self.rewards.joint_vel_neck.weight = -0.5
 
         # ---- Added gait rewards only ----
-        self.rewards.feet_step_sequence.weight = 0.0
-        self.rewards.feet_air_time_penalty.weight = 0.0
-        self.rewards.feet_air_time_penalty.params["threshold"] = 0.25 
+        #self.rewards.feet_step_sequence.weight = 0.4
+        self.rewards.feet_air_time_penalty.weight = -0.03
+        self.rewards.feet_air_time_penalty.params["threshold"] = 0.28
 
         # ------ Commands configuration --------
         self.commands.base_velocity.ranges.lin_vel_y = (-0.0, 1.0) # (-1.0, 0.0)

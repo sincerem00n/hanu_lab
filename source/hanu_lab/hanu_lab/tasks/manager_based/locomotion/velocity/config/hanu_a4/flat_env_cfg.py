@@ -6,10 +6,10 @@
 from isaaclab.managers import SceneEntityCfg
 from isaaclab.utils import configclass
 
-from .rough_env_cfg import HanuA3RoughEnvCfgV0, HanuA3RoughEnvCfgV1
+from .rough_env_cfg import HanuA4RoughEnvCfgV0, HanuA4RoughEnvCfgV1
 
 @configclass
-class HanuA3FlatEnvCfgV0(HanuA3RoughEnvCfgV0):
+class HanuA4FlatEnvCfgV0(HanuA4RoughEnvCfgV0):
     """Configuration for the flat environment in the RAI Hanumanoid project. -- Version 0."""
     def __post_init__(self):
         super().__post_init__()
@@ -26,7 +26,7 @@ class HanuA3FlatEnvCfgV0(HanuA3RoughEnvCfgV0):
 from isaaclab.utils import configclass
 
 @configclass
-class HanuA3FlatEnvCfgV1(HanuA3RoughEnvCfgV1):
+class HanuA4FlatEnvCfgV1(HanuA4RoughEnvCfgV1):
     """Configuration for the flat environment in the RAI Hanumanoid project. -- Version 1."""
     def __post_init__(self):
         super().__post_init__()

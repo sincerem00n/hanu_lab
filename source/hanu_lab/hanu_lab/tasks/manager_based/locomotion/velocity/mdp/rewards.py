@@ -90,7 +90,6 @@ def feet_air_time_negative_biped(env, command_name: str, threshold: float, senso
     reward *= torch.norm(env.command_manager.get_command(command_name)[:, :2], dim=1) > 0.1
     return reward
 
-# New #
 
 def feet_slide(env, sensor_cfg: SceneEntityCfg, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
     """Penalize feet sliding.
@@ -233,9 +232,13 @@ def action_sync(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg, joint_groups:
     reward *= torch.clamp(-env.scene["robot"].data.projected_gravity_b[:, 2], 0, 0.7) / 0.7
     return reward
 
+# New #
 
-
-def feet_step_sequence_biped(env, command_name: str, sensor_cfg: SceneEntityCfg) -> torch.Tensor:
+def feet_step_sequence_biped(env, 
+                             command_name: str, 
+                             sensor_cfg: SceneEntityCfg,
+                             threshold_steps: float = 1.5
+                             ) -> torch.Tensor:
     """Reward alternating left-right stepping sequence for bipeds.
 
     Gives reward only when a new swing-foot event happens AND
@@ -244,9 +247,9 @@ def feet_step_sequence_biped(env, command_name: str, sensor_cfg: SceneEntityCfg)
     """
     contact_sensor: ContactSensor = env.scene.sensors[sensor_cfg.name]
 
-    first_contact = contact_sensor.compute_first_contact(env.step_dt)[:, sensor_cfg.body_ids]
+    # first_contact = contact_sensor.compute_first_contact(env.step_dt)[:, sensor_cfg.body_ids]
     air_time = contact_sensor.data.current_air_time[:, sensor_cfg.body_ids]
-    toe_off = (air_time > 0.0) & (air_time < env.step_dt * 1.5)
+    toe_off = (air_time > 0.0) & (air_time < env.step_dt * threshold_steps) 
     valid_event = torch.sum(toe_off.int(), dim=1) == 1
     swing_foot = torch.argmax(toe_off.int(), dim=1)
 
@@ -258,5 +261,48 @@ def feet_step_sequence_biped(env, command_name: str, sensor_cfg: SceneEntityCfg)
     env.last_swing_foot = torch.where(
         valid_event, swing_foot, env.last_swing_foot
     )
+
+    return reward
+
+# New #
+
+def feet_lateral_separation_reward(
+    env,
+    sensor_cfg: SceneEntityCfg,
+    threshold: float = 0.13,     # = foot width (0.11) + clearance (~0.02)
+    margin: float = 0.03,        # soft zone ~ 2–3 cm
+    command_name: str | None = "base_velocity",
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+) -> torch.Tensor:
+    """Reward that penalizes feet getting too close laterally.
+    Returns 0 when OK, negative when feet are too close.
+    """
+    asset = env.scene[asset_cfg.name]
+
+    # world positions of left/right foot link centers
+    foot_pos_w = asset.data.body_pos_w[:, sensor_cfg.body_ids, :]  # (N, 2, 3)
+    left_w = foot_pos_w[:, 0, :3]
+    right_w = foot_pos_w[:, 1, :3]
+
+    # transform into yaw-aligned base frame
+    base_yaw = yaw_quat(asset.data.root_quat_w)
+    delta_yaw = quat_apply_inverse(base_yaw, left_w - right_w)
+
+    # lateral (left-right) separation
+    sep = torch.abs(delta_yaw[:, 1])
+
+    # soft penalty when too close
+    penalty = torch.clamp((threshold - sep) / margin, min=0.0)
+    penalty = penalty ** 2
+
+    # reward is negative penalty
+    reward = -penalty
+
+    # apply only when robot is commanded to move
+    if command_name is not None:
+        moving = torch.norm(
+            env.command_manager.get_command(command_name)[:, :2], dim=1
+        ) > 0.1
+        reward = reward * moving.float()
 
     return reward
