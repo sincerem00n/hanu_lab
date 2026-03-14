@@ -306,3 +306,54 @@ def feet_lateral_separation_reward(
         reward = reward * moving.float()
 
     return reward
+
+# New #
+
+def arms_lateral_open_pose(
+    env,
+    arm_sensor_cfg: SceneEntityCfg,
+    min_lateral_dist: float = 0.22,
+    max_backward_dist: float = 0.08,
+    lateral_margin: float = 0.05,
+    backward_margin: float = 0.05,
+    command_name: str | None = "base_velocity",
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+) -> torch.Tensor:
+    """Encourage arms to stay laterally away from the torso and not tucked backward."""
+
+    asset = env.scene[asset_cfg.name]
+
+    # (N, 2, 3)
+    arm_pos_w = asset.data.body_pos_w[:, arm_sensor_cfg.body_ids, :3]
+    root_pos_w = asset.data.root_pos_w[:, :3]
+
+    # relative arm positions in world frame
+    arm_rel_w = arm_pos_w - root_pos_w.unsqueeze(1)   # (N, 2, 3)
+
+    # yaw quaternion of base
+    base_yaw = yaw_quat(asset.data.root_quat_w)       # (N, 4)
+
+    # flatten 2 arms -> (N*2, 3)
+    arm_rel_w_flat = arm_rel_w.reshape(-1, 3)         # (N*2, 3)
+
+    # repeat quaternion for left/right arm -> (N*2, 4)
+    base_yaw_rep = base_yaw.unsqueeze(1).repeat(1, arm_rel_w.shape[1], 1).reshape(-1, 4)
+
+    # transform into yaw-aligned base frame
+    arm_rel_flat = quat_apply_inverse(base_yaw_rep, arm_rel_w_flat)   # (N*2, 3)
+    arm_rel = arm_rel_flat.view(arm_rel_w.shape[0], arm_rel_w.shape[1], 3)  # (N, 2, 3)
+
+    # x = forward/backward, y = lateral
+    lateral = torch.abs(arm_rel[:, :, 1])
+    backward = torch.clamp(-arm_rel[:, :, 0], min=0.0)
+
+    lateral_penalty = torch.clamp((min_lateral_dist - lateral) / lateral_margin, min=0.0) ** 2
+    backward_penalty = torch.clamp((backward - max_backward_dist) / backward_margin, min=0.0) ** 2
+
+    reward = -(torch.mean(lateral_penalty, dim=1) + 0.5 * torch.mean(backward_penalty, dim=1))
+
+    if command_name is not None:
+        moving = torch.norm(env.command_manager.get_command(command_name)[:, :2], dim=1) > 0.1
+        reward = reward * moving.float()
+
+    return reward

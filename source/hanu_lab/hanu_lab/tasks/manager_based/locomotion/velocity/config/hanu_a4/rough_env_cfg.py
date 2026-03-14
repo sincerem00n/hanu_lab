@@ -196,6 +196,22 @@ class HanuA4RewardsCfg(RewardsCfg):
     )
 
 
+    arms_away_from_body = RewTerm(
+        func=mdp.arms_lateral_open_pose,
+        weight=0.35,
+        params={
+            "arm_sensor_cfg": SceneEntityCfg(
+                "robot",
+                body_names=["l_wrist_pitch_1", "r_wrist_pitch_1"]
+            ),
+            "min_lateral_dist": 0.22,
+            "max_backward_dist": 0.06,
+            "lateral_margin": 0.05,
+            "backward_margin": 0.05,
+            "command_name": "base_velocity",
+        },
+    )
+
 @configclass
 class HanuA4TerminationsCfg(TerminationsCfg):
     time_out = DoneTerm(func=mdp.time_out, time_out=True)
@@ -477,7 +493,6 @@ class HanuA4RoughEnvCfgV1(HanuA4RoughEnvCfg):
         self.observations.policy.joint_vel.scale = 0.05
 
         # Disable unused observations
-        self.observations.policy.base_lin_vel = None
         self.observations.policy.height_scan = None
 
         # ------ Actions configuration --------
@@ -505,11 +520,11 @@ class HanuA4RoughEnvCfgV1(HanuA4RoughEnvCfg):
         }
 
         # ------- Rewards configuration --------
-        self.rewards.track_lin_vel_xy_exp.weight = 1.5
-        self.rewards.feet_air_time.weight = 1.0
+        self.rewards.track_lin_vel_xy_exp.weight = 2.0
+        self.rewards.feet_air_time.weight = 0.6
         self.rewards.feet_air_time.params["threshold"] = 0.18
-        self.rewards.feet_slide.weight = -0.1
-        self.rewards.feet_mirror.weight = -0.0
+        self.rewards.feet_slide.weight = -0.2
+        #self.rewards.feet_mirror.weight = -0.0
         self.rewards.action_rate_l2.weight = -0.005
 
         #self.rewards.knee_pose_deviation.weight = -0.0
@@ -519,14 +534,19 @@ class HanuA4RoughEnvCfgV1(HanuA4RoughEnvCfg):
 
         # ---- Added gait rewards only ----
         #self.rewards.feet_step_sequence.weight = 0.4
-        self.rewards.feet_air_time_penalty.weight = -0.03
-        self.rewards.feet_air_time_penalty.params["threshold"] = 0.28
+        self.rewards.feet_air_time_penalty.weight = -0.05
+        self.rewards.feet_air_time_penalty.params["threshold"] = 0.24
 
         # ------ Commands configuration --------
-        self.commands.base_velocity.ranges.lin_vel_y = (-0.0, 1.0) # (-1.0, 0.0)
+        self.commands.base_velocity.ranges.lin_vel_y = (-1.0, 1.0) # (-1.0, 0.0)
         self.commands.base_velocity.ranges.ang_vel_z = (-0.5, 0.5)
         self.commands.base_velocity.rel_standing_envs = 0.3
 
+        self.rewards.feet_step_sequence.weight = 0.25   
+        self.rewards.feet_mirror.weight = -0.05
+
+        self.rewards.arms_away_from_body.weight = 0.35
+        
         # ------ Terminations configuration --------
         # self.terminations.base_contact.params["sensor_cfg"].body_names = "base_.*"
         self.terminations.base_contact.params["sensor_cfg"].body_names = [f"^(?!.*{self.foot_link_name}).*"]
