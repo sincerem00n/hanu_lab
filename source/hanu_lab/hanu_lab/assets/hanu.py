@@ -12,7 +12,7 @@ Reference: https://github.com/whaly-w/Hanumanoid
 """
 
 import isaaclab.sim as sim_util
-from isaaclab.actuators import ActuatorNetMLPCfg, DCMotorCfg, ImplicitActuatorCfg
+from isaaclab.actuators import ActuatorNetMLPCfg, DCMotorCfg, ImplicitActuatorCfg, DelayedPDActuatorCfg
 from isaaclab.assets.articulation import ArticulationCfg
 
 from isaaclab.utils.assets import ISAACLAB_NUCLEUS_DIR
@@ -684,12 +684,14 @@ HANU_A4_CFG = ArticulationCfg(
             ".*_shoulder_pitch": 0.40,
             ".*_elbow_pitch": -0.9,
             ".*_shoulder_roll": 0.02,
+            # wider arms
+            ".*_shoulder_roll": 0.30,
         },
         joint_vel={".*": 0.0},
     ),
     soft_joint_pos_limit_factor=0.9,
     actuators={
-        "legs": ImplicitActuatorCfg(
+        "legs": DelayedPDActuatorCfg(
             joint_names_expr=[
                 ".*_hip_.*",
                 ".*_knee_.*",
@@ -703,8 +705,10 @@ HANU_A4_CFG = ArticulationCfg(
                 ".*_knee_pitch": 250.0,
             },
             damping=5.0,
+            min_delay=5,
+            max_delay=8,
         ),
-        "feet": ImplicitActuatorCfg(
+        "feet": DelayedPDActuatorCfg(
             joint_names_expr=[
                 ".*_ankle_.*",
             ],
@@ -712,8 +716,10 @@ HANU_A4_CFG = ArticulationCfg(
             velocity_limit=0.628,
             stiffness=20.0,
             damping=2.0,
+            min_delay=5,
+            max_delay=8,
         ),
-        "arms": ImplicitActuatorCfg(
+        "arms": DelayedPDActuatorCfg(
             joint_names_expr=[
                 ".*_shoulder_.*",
                 ".*_elbow_.*",
@@ -722,19 +728,25 @@ HANU_A4_CFG = ArticulationCfg(
             velocity_limit=0.628,
             stiffness=40.0,
             damping=10.0,
+            min_delay=5,
+            max_delay=8,
+
         ),
-        "others": ImplicitActuatorCfg(
+        "others": DelayedPDActuatorCfg(
             joint_names_expr=[
                 ".*_neck_.*",
                 ".*_abdomen_.*",
-                ".*_E1R",
-                ".*_wrist_.*",
+                # ".*_E1R",
+                # ".*_wrist_.*",
 
             ],
             effort_limit=300.0,
             velocity_limit=0.628,
             stiffness=40.0,
             damping=10.0,
+            min_delay=5,
+            max_delay=8,
+
         ),
     },
 )

@@ -19,6 +19,7 @@ class HanuA4FlatEnvCfgV0(HanuA4RoughEnvCfgV0):
 
         self.scene.height_scanner = None
         self.observations.policy.height_scan = None
+        self.observations.critic.height_scan = None
 
         self.curriculum.terrain_levels = None
 

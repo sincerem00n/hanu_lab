@@ -123,12 +123,12 @@ class ObservationsCfg:
         """Observations for policy group."""
 
         # observation terms (order preserved)
-        base_lin_vel = ObsTerm(
-            func=mdp.base_lin_vel,
-            noise=Unoise(n_min=-0.1, n_max=0.1), 
-            clip=(-100.00, 100.00),
-            scale=1.0,
-        )
+        # base_lin_vel = ObsTerm(
+        #     func=mdp.base_lin_vel,
+        #     noise=Unoise(n_min=-0.1, n_max=0.1), 
+        #     clip=(-100.00, 100.00),
+        #     scale=1.0,
+        # )
         base_ang_vel = ObsTerm(
             func=mdp.base_ang_vel,
             noise=Unoise(n_min=-0.2, n_max=0.2),
@@ -175,6 +175,8 @@ class ObservationsCfg:
             func=mdp.last_action,
             clip=(-100.0, 100.0),
             scale=1.0,
+            history_length=3,
+            flatten_history_dim=True,
         )
         height_scan = ObsTerm(
             func=mdp.height_scan,
@@ -239,6 +241,8 @@ class ObservationsCfg:
             func=mdp.last_action,
             clip=(-100.0, 100.0),
             scale=1.0,
+            history_length=3,
+            flatten_history_dim=True,
         )
         height_scan = ObsTerm(
             func=mdp.height_scan,
