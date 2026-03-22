@@ -175,8 +175,8 @@ class ObservationsCfg:
             func=mdp.last_action,
             clip=(-100.0, 100.0),
             scale=1.0,
-            history_length=3,
-            flatten_history_dim=True,
+            # history_length=3,
+            # flatten_history_dim=True,
         )
         height_scan = ObsTerm(
             func=mdp.height_scan,
@@ -241,8 +241,8 @@ class ObservationsCfg:
             func=mdp.last_action,
             clip=(-100.0, 100.0),
             scale=1.0,
-            history_length=3,
-            flatten_history_dim=True,
+            # history_length=3,
+            # flatten_history_dim=True,
         )
         height_scan = ObsTerm(
             func=mdp.height_scan,

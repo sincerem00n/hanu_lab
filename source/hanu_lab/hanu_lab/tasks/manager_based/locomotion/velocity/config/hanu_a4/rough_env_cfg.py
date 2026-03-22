@@ -151,6 +151,34 @@ class HanuA4RewardsCfg(RewardsCfg):
             )
         },
     )
+
+    joint_vel_abs = RewTerm(
+        func=mdp.joint_vel_l2,
+        weight=-0.5,
+        params={
+            "asset_cfg":SceneEntityCfg(
+            "robot",
+            joint_names=[
+                ".*_abdomen_.*",
+            ]
+            )
+        },
+    )
+
+    joint_vel_arms = RewTerm(
+        func=mdp.joint_vel_l2,
+        weight=-0.1,
+        params={
+            "asset_cfg":SceneEntityCfg(
+                "robot",
+                joint_names=[
+                    ".*_shoulder_.*",
+                    ".*_elbow_.*",
+                    # ".*_wrist_.*",
+                ],
+            )
+        },
+    )
     joint_deviation_neck = RewTerm(
         func=mdp.joint_deviation_l1,
         weight=-0.1,
@@ -441,7 +469,7 @@ class HanuA4RoughEnvCfgV0(HanuA4RoughEnvCfg):
         # COMMANDS CONFIGURATION
         # ==========================================================
         self.commands.base_velocity.ranges.lin_vel_x = (0.0, 0.0)
-        self.commands.base_velocity.ranges.lin_vel_y = (0.0, 0.5)  # (-1.0, 0.0)
+        self.commands.base_velocity.ranges.lin_vel_y = (0.2, 0.5)  # (-1.0, 0.0)
         self.commands.base_velocity.ranges.ang_vel_z = (0.0, 0.0)
 
         self.commands.base_velocity.rel_standing_envs = 0.02
@@ -452,7 +480,7 @@ class HanuA4RoughEnvCfgV0(HanuA4RoughEnvCfg):
         self.rewards.track_lin_vel_xy_exp.weight = 2.0
         self.rewards.track_ang_vel_z_exp.weight = 0.5
         self.rewards.flat_orientation_l2 = None
-        self.rewards.upright_orientation.weight = 3.0
+        self.rewards.upright_orientation.weight = 2.0
         self.rewards.lin_vel_z_l2.weight = -0.5
         self.rewards.ang_vel_xy_l2.weight = -0.3
 
@@ -460,7 +488,7 @@ class HanuA4RoughEnvCfgV0(HanuA4RoughEnvCfg):
         self.rewards.feet_air_time.params["threshold"] = 0.4
 
         self.rewards.feet_air_time_penalty.weight = -0.01
-        self.rewards.feet_air_time_penalty.params["threshold"] = 0.20
+        self.rewards.feet_air_time_penalty.params["threshold"] = 0.38
 
         self.rewards.feet_lateral_sep_reward = None
         self.rewards.arms_away_from_body = None
@@ -468,21 +496,22 @@ class HanuA4RoughEnvCfgV0(HanuA4RoughEnvCfg):
         # self.rewards.arms_away_from_body.weight = 0.30
         # self.rewards.arms_away_from_body.params["min_lateral_dist"] = 0.20
 
-        self.rewards.feet_slide.weight = -0.4
+        self.rewards.feet_slide.weight = -0.7
         self.rewards.feet_mirror = None
         # self.rewards.feet_mirror.weight = -0.02
 
         self.rewards.action_rate_l2.weight = -0.005
-        self.rewards.dof_acc_l2 = None
-        self.rewards.dof_torques_l2.weight = -1.0e-6
-        self.rewards.joint_vel_legs.weight = -0.12
+        # self.rewards.dof_acc_l2 = None
+        self.rewards.dof_torques_l2.weight = -5.0e-7
+        self.rewards.joint_vel_legs.weight = -0.2
         self.rewards.joint_vel_neck.weight = -0.25
+        self.rewards.joint_vel_arms = None
 
         self.rewards.ankle_dof_pos_limits.weight = -0.2
         # self.rewards.knee_pose_deviation.weight = -0.0
         # self.rewards.knee_dof_pos_limits.weight = -0.0
-        self.rewards.joint_deviation_arms.weight = -0.1
-        self.rewards.joint_deviation_neck.weight = -0.05
+        self.rewards.joint_deviation_arms.weight = -0.2
+        self.rewards.joint_deviation_neck.weight = -0.1
         self.rewards.joint_deviation_legs.weight = -0.3
 
         self.rewards.feet_step_sequence.weight = 0.1
