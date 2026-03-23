@@ -670,22 +670,22 @@ HANU_A4_CFG = ArticulationCfg(
         rot=(1.0, 0.0, 0.0, 0.0),  # (w, x, y, z)
         joint_pos={
             # bend legs
-            ".*_hip_pitch": -0.32,
-            ".*_knee_pitch": 0.42,
-            ".*_ankle_pitch": 0.30,
+            ".*_hip_pitch": -0.14, 
+            ".*_knee_pitch": 0.17, 
+            ".*_ankle_pitch": 0.08,
             # wider legs
             ".*_l_hip_roll": 0.02,
             ".*_r_hip_roll": 0.02,
             ".*_l_ankle_roll": -0.02,
             ".*_r_ankle_roll": 0.02,
             ".*_l_hip_yaw": -0.08,
-            ".*_r_hip_yaw": -0.08,
+            ".*_r_hip_yaw": -0.08, 
             # bend arms
-            ".*_shoulder_pitch": 0.25,
-            ".*_elbow_pitch": -0.9,
+            ".*_shoulder_pitch": -0.06,
+            # ".*_elbow_pitch": -0.9,
             # ".*_shoulder_roll": 0.02,
             # wider arms
-            ".*_shoulder_roll": 0.30,
+            ".*_shoulder_roll": 0.25, # -> degree 17.18872
         },
         joint_vel={".*": 0.0},
     ),
