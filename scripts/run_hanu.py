@@ -43,7 +43,7 @@ from isaaclab.sim import SimulationContext
 ##
 # Pre-defined configs
 ##
-from hanu_lab.assets import HANU_A3_CFG
+from hanu_lab.assets import HANU_A4_CFG
 
 
 def design_scene() -> tuple[dict, list[list[float]]]:
@@ -64,7 +64,7 @@ def design_scene() -> tuple[dict, list[list[float]]]:
     prim_utils.create_prim("/World/Origin2", "Xform", translation=origins[1])
 
     # Articulation
-    hanu_cfg = HANU_A3_CFG.copy()
+    hanu_cfg = HANU_A4_CFG.copy()
     hanu_cfg.prim_path = "/World/Origin.*/Robot"
     
     """
