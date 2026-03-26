@@ -6,6 +6,8 @@
 import math
 from dataclasses import MISSING
 
+from torch import func
+
 import isaaclab.sim as sim_utils
 from isaaclab.assets import ArticulationCfg, AssetBaseCfg
 from isaaclab.envs import ManagerBasedRLEnvCfg
@@ -110,7 +112,12 @@ class CommandsCfg:
 class ActionsCfg:
     """Action specifications for the MDP."""
 
-    joint_pos = mdp.JointPositionActionCfg(asset_name="robot", joint_names=[".*"], scale=0.5, use_default_offset=True, preserve_order=True
+    joint_pos = mdp.JointPositionActionCfg(
+        asset_name="robot", 
+        joint_names=[".*"], 
+        scale=0.5, 
+        use_default_offset=True, 
+        preserve_order=True
     )
 
 
@@ -184,6 +191,18 @@ class ObservationsCfg:
             noise=Unoise(n_min=-0.1, n_max=0.1),
             clip=(-100.0, 100.0),   
         )
+        # gait_phase = ObsTerm(
+        #     func=mdp.gait_phase_sin_cos,
+        #     params={
+        #         "cycle_time": 1.0,
+        #     },
+        # )
+        # target_q = ObsTerm(
+        #     func=mdp.target_joint_positions,
+        #     params={
+        #         "time_offset": 0.0,
+        #     },
+        # )
 
         def __post_init__(self):
             self.enable_corruption = True
@@ -249,6 +268,18 @@ class ObservationsCfg:
             params={"sensor_cfg": SceneEntityCfg("height_scanner")},
             clip=(-100.0, 100.0),
         )
+        # gait_phase = ObsTerm(
+        #     func=mdp.gait_phase_sin_cos,
+        #     params={
+        #         "cycle_time": 1.0,
+        #     }
+        # )
+        # target_q = ObsTerm(
+        #     func=mdp.target_joint_positions,
+        #     params={
+        #         "time_offset": 0.0,
+        #     },
+        # )
 
         def __post_init__(self):
             self.enable_corruption = False
