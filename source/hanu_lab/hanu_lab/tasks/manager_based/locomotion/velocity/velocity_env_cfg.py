@@ -184,6 +184,19 @@ class ObservationsCfg:
             noise=Unoise(n_min=-0.1, n_max=0.1),
             clip=(-100.0, 100.0),   
         )
+        
+        # gait_phase = ObsTerm(
+        #     func=mdp.gait_phase_sin_cos,
+        #     params={
+        #         "cycle_time": 1.0,
+        #     }
+        # )
+        # target_q = ObsTerm(
+        #     func=mdp.target_joint_positions,
+        #     params={
+        #         "time_offset": 0.0,
+        #     },
+        # )
 
         def __post_init__(self):
             self.enable_corruption = True
@@ -249,6 +262,19 @@ class ObservationsCfg:
             params={"sensor_cfg": SceneEntityCfg("height_scanner")},
             clip=(-100.0, 100.0),
         )
+
+        # gait_phase = ObsTerm(
+        #     func=mdp.gait_phase_sin_cos,
+        #     params={
+        #         "cycle_time": 1.0,
+        #     }
+        # )
+        # target_q = ObsTerm(
+        #     func=mdp.target_joint_positions,
+        #     params={
+        #         "time_offset": 0.0,
+        #     },
+        # )
 
         def __post_init__(self):
             self.enable_corruption = False
