@@ -559,6 +559,10 @@ class HanuA4RoughEnvCfgV0(HanuA4RoughEnvCfg):
 @configclass
 class HanuA4RoughEnvCfgV1(HanuA4RoughEnvCfg):
 
+    """
+    Training Environment for motion tracking, new observations
+    """
+
     def __post_init__(self):
         super().__post_init__()
 
@@ -624,14 +628,22 @@ class HanuA4RoughEnvCfgV1(HanuA4RoughEnvCfg):
         self.rewards.ang_vel_xy_l2.weight = -0.3
 
         # ------------------------------------------
-        # self.rewards.feet_air_time.weight = 0.5
-        # self.rewards.feet_air_time.params["threshold"] = 0.4
+        self.rewards.feet_air_time.weight = 0.5
+        self.rewards.feet_air_time.params["threshold"] = 0.4
 
-        # self.rewards.feet_air_time_penalty.weight = -0.01
-        # self.rewards.feet_air_time_penalty.params["threshold"] = 0.38
+        self.rewards.feet_air_time_penalty.weight = -0.01
+        self.rewards.feet_air_time_penalty.params["threshold"] = 0.38
+
+        # self.rewards.feet_air_time = None
+        # self.rewards.feet_air_time_penalty = None
         # ------------------------------------------
-        self.rewards.feet_air_time = None
-        self.rewards.feet_air_time_penalty = None
+
+        # ------------------------------------------
+        self.rewards.ref_joint_pos = None
+        self.rewards.ref_joint_vel = None
+        self.rewards.foot_pos_tracking = None
+        # ------------------------------------------
+
 
         self.rewards.feet_lateral_sep_reward = None
         self.rewards.arms_away_from_body = None
@@ -639,9 +651,14 @@ class HanuA4RoughEnvCfgV1(HanuA4RoughEnvCfg):
         # self.rewards.arms_away_from_body.weight = 0.30
         # self.rewards.arms_away_from_body.params["min_lateral_dist"] = 0.20
 
-        self.rewards.feet_slide = None
-        self.rewards.feet_mirror = None
-        # self.rewards.feet_mirror.weight = -0.02
+        # -----------------------------------------
+        # self.rewards.feet_slide = None
+        # self.rewards.feet_mirror = None
+        # self.reward.feet_lateral_sep_reward = None
+        self.rewards.feet_slide.weight = -0.07
+        self.rewards.feet_mirror.weight = -0.02
+        self.rewards.feet_step_sequence.weight = -0.01
+        # -----------------------------------------
 
         self.rewards.action_rate_l2.weight = -0.005
         # self.rewards.dof_acc_l2 = None
@@ -656,8 +673,6 @@ class HanuA4RoughEnvCfgV1(HanuA4RoughEnvCfg):
         self.rewards.joint_deviation_arms.weight = -0.2
         self.rewards.joint_deviation_neck.weight = -0.1
         self.rewards.joint_deviation_legs.weight = -0.3
-
-        self.rewards.feet_step_sequence = None
 
         # --- Termination penalty ---
         self.rewards.termination_penalty.weight = -200.0
