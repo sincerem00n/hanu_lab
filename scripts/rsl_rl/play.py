@@ -242,6 +242,17 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
         if timestep % 200 == 0:
             base_env = env.unwrapped
 
+            # --- action RPM check ---
+            import math
+            RPM_LIMIT = 6.0
+            actions_np = actions[0].cpu().tolist()  # env 0
+            actions_rpm = [a * 60.0 / (2 * math.pi) for a in actions_np]
+            exceeded = [(i, rpm) for i, rpm in enumerate(actions_rpm) if abs(rpm) > RPM_LIMIT]
+            print(f"[DBG] step={timestep}  actions_rpm env0: {[f'{r:.2f}' for r in actions_rpm]}")
+            if exceeded:
+                print(f"[DBG] *** EXCEEDS {RPM_LIMIT} RPM *** joints: {[(i, f'{r:.2f}') for i, r in exceeded]}")
+            # ------------------------
+
             # 1) commanded velocity (vx, vy, wz)
             try:
                 cmd = base_env.command_manager.get_command("base_velocity")

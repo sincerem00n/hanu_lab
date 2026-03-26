@@ -676,8 +676,8 @@ HANU_A4_CFG = ArticulationCfg(
             # wider legs
             ".*_l_hip_roll": 0.02,
             ".*_r_hip_roll": 0.02,
-            ".*_l_ankle_roll": -0.02,
-            ".*_r_ankle_roll": 0.02,
+            ".*_l_ankle_roll": 0.02,
+            ".*_r_ankle_roll": -0.02,
             ".*_l_hip_yaw": -0.08,
             ".*_r_hip_yaw": -0.08, 
             # bend arms
@@ -705,8 +705,8 @@ HANU_A4_CFG = ArticulationCfg(
                 ".*_knee_pitch": 150.0,
             },
             damping=15.0,
-            min_delay=0,
-            max_delay=0,
+            min_delay=5,
+            max_delay=8,
         ),
         "feet": DelayedPDActuatorCfg(
             joint_names_expr=[
@@ -716,8 +716,8 @@ HANU_A4_CFG = ArticulationCfg(
             velocity_limit=0.628,
             stiffness=80.0,
             damping=8.0,
-            min_delay=0,
-            max_delay=0,
+            min_delay=5,
+            max_delay=8,
         ),
         "arms": DelayedPDActuatorCfg(
             joint_names_expr=[
@@ -728,8 +728,8 @@ HANU_A4_CFG = ArticulationCfg(
             velocity_limit=0.628,
             stiffness=40.0,
             damping=10.0,
-            min_delay=0,
-            max_delay=0,
+            min_delay=5,
+            max_delay=8,
 
         ),
         "others": DelayedPDActuatorCfg(
@@ -744,8 +744,8 @@ HANU_A4_CFG = ArticulationCfg(
             velocity_limit=0.628,
             stiffness=20.0,
             damping=1.0,
-            min_delay=0,
-            max_delay=0,
+            min_delay=5,
+            max_delay=8,
         ),
     },
 )
