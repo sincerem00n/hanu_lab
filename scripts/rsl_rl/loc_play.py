@@ -127,6 +127,7 @@ def plot_velocity_comparison(
     cmd_log:    list,   # each entry: np.array shape (3,) → [vx_cmd, vy_cmd, wz_cmd]
     vel_log:    list,   # each entry: np.array shape (3,) → [vx_act, vy_act, wz_act]
     save_path:  str = "",
+    rmse:       np.ndarray | None = None,  # shape (3,) per-channel RMSE
 ):
     """Render a 3-row figure: commanded (dashed) vs actual (solid) for vx, vy, ωz."""
 
@@ -174,6 +175,17 @@ def plot_velocity_comparison(
             facecolor=_PALETTE["panel"], edgecolor=_PALETTE["grid"],
             labelcolor=_PALETTE["fg"],
         )
+
+        # annotate RMSE in upper-left corner of each subplot
+        if rmse is not None:
+            ax.text(
+                0.01, 0.95, f"RMSE = {rmse[i]:.4f}",
+                transform=ax.transAxes,
+                fontsize=9, verticalalignment="top",
+                color="#C62828",
+                bbox=dict(boxstyle="round,pad=0.3", facecolor="#FFEBEE",
+                          edgecolor="#EF9A9A", alpha=0.9),
+            )
 
     if save_path:
         os.makedirs(os.path.dirname(os.path.abspath(save_path)), exist_ok=True)
@@ -406,12 +418,23 @@ def main(
         print("[PLOT] Not enough data to plot.")
         return
 
+    # ── RMSE per channel ──────────────────────────────────────────────────────
+    c_arr = np.asarray(cmd_log)   # (T, 3)
+    v_arr = np.asarray(vel_log)   # (T, 3)
+    rmse  = np.sqrt(np.mean((c_arr - v_arr) ** 2, axis=0))  # shape (3,)
+    labels = ["vx", "vy", "wz"]
+    print("\n========== RMSE SUMMARY ==========")
+    for lbl, val in zip(labels, rmse):
+        print(f"  {lbl}  RMSE = {val:.4f}")
+    print(f"  Overall RMSE = {float(np.mean(rmse)):.4f}")
+    print("==================================\n", flush=True)
+
     # Auto-generate save path if none given
     save_path = args_cli.save_plot
     if not save_path:
         save_path = os.path.join(log_dir, "velocity_comparison.png")
 
-    plot_velocity_comparison(timestamps, cmd_log, vel_log, save_path=save_path)
+    plot_velocity_comparison(timestamps, cmd_log, vel_log, save_path=save_path, rmse=rmse)
 
 
 # ──────────────────────────────────────────────────────────────────────────────
