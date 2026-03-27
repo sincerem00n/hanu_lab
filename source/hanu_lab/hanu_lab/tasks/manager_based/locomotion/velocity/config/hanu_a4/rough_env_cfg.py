@@ -12,7 +12,7 @@ from pxr import UsdPhysics
 ###########################
 # Pre-defined configs
 ###########################
-from hanu_lab.assets import HANU_A4_CFG, HANU_A4_IM_CFG
+from hanu_lab.assets import HANU_A4_CFG, HANU_A4_IM_CFG, HANU_A4_TEST_CFG
 
 from isaaclab.managers import RewardTermCfg as RewTerm
 from isaaclab.managers import TerminationTermCfg as DoneTerm
@@ -447,6 +447,8 @@ class HanuA4RoughEnvCfgV0(HanuA4RoughEnvCfg):
     def __post_init__(self):
         super().__post_init__()
 
+        # self.scene.robot = HANU_A4_TEST_CFG.replace(prim_path="{ENV_REGEX_NS}/robot")
+
         # ==========================================================
         # OBSERVATIONS CONFIGURATION
         # ==========================================================
@@ -612,7 +614,7 @@ class HanuA4RoughEnvCfgV1(HanuA4RoughEnvCfg):
         # COMMANDS CONFIGURATION
         # ==========================================================
         self.commands.base_velocity.ranges.lin_vel_x = (0.0, 0.0)
-        self.commands.base_velocity.ranges.lin_vel_y = (0.2, 0.5)  # (-1.0, 0.0)
+        self.commands.base_velocity.ranges.lin_vel_y = (0.0, 0.5)  # (-1.0, 0.0)
         self.commands.base_velocity.ranges.ang_vel_z = (0.0, 0.0)
 
         self.commands.base_velocity.rel_standing_envs = 0.02
@@ -628,20 +630,20 @@ class HanuA4RoughEnvCfgV1(HanuA4RoughEnvCfg):
         self.rewards.ang_vel_xy_l2.weight = -0.3
 
         # ------------------------------------------
-        self.rewards.feet_air_time.weight = 0.5
-        self.rewards.feet_air_time.params["threshold"] = 0.4
+        # self.rewards.feet_air_time.weight = 0.5
+        # self.rewards.feet_air_time.params["threshold"] = 0.4
 
-        self.rewards.feet_air_time_penalty.weight = -0.01
-        self.rewards.feet_air_time_penalty.params["threshold"] = 0.38
+        # self.rewards.feet_air_time_penalty.weight = -0.01
+        # self.rewards.feet_air_time_penalty.params["threshold"] = 0.38
 
-        # self.rewards.feet_air_time = None
-        # self.rewards.feet_air_time_penalty = None
+        self.rewards.feet_air_time = None
+        self.rewards.feet_air_time_penalty = None
         # ------------------------------------------
 
         # ------------------------------------------
-        self.rewards.ref_joint_pos = None
-        self.rewards.ref_joint_vel = None
-        self.rewards.foot_pos_tracking = None
+        # self.rewards.ref_joint_pos = None
+        # self.rewards.ref_joint_vel = None
+        # self.rewards.foot_pos_tracking = None
         # ------------------------------------------
 
 
@@ -652,12 +654,12 @@ class HanuA4RoughEnvCfgV1(HanuA4RoughEnvCfg):
         # self.rewards.arms_away_from_body.params["min_lateral_dist"] = 0.20
 
         # -----------------------------------------
-        # self.rewards.feet_slide = None
-        # self.rewards.feet_mirror = None
-        # self.reward.feet_lateral_sep_reward = None
-        self.rewards.feet_slide.weight = -0.07
-        self.rewards.feet_mirror.weight = -0.02
-        self.rewards.feet_step_sequence.weight = -0.01
+        self.rewards.feet_slide = None
+        self.rewards.feet_mirror = None
+        self.rewards.feet_step_sequence = None
+        # self.rewards.feet_slide.weight = -0.07
+        # self.rewards.feet_mirror.weight = -0.02
+        # self.rewards.feet_step_sequence.weight = -0.01
         # -----------------------------------------
 
         self.rewards.action_rate_l2.weight = -0.005
@@ -684,3 +686,237 @@ class HanuA4RoughEnvCfgV1(HanuA4RoughEnvCfg):
             f"^(?!.*{self.foot_link_name}).*"
         ]
 
+class HanuA4RoughEnvCfgV2(HanuA4RoughEnvCfg):
+
+    """
+    Configuration for the rough environment in the RAI Hanumanoid project. -- For Play.
+    
+    """
+
+    def __post_init__(self):
+        super().__post_init__()
+
+        self.scene.robot = HANU_A4_TEST_CFG.replace(prim_path="{ENV_REGEX_NS}/robot")
+
+        # ==========================================================
+        # OBSERVATIONS CONFIGURATION
+        # ==========================================================
+        # Scale observations for stable learning
+        # self.observations.policy.base_lin_vel.scale = 2.0
+        self.observations.policy.base_ang_vel.scale = 0.25
+        self.observations.policy.joint_pos.scale = 1.0
+        self.observations.policy.joint_vel.scale = 0.05
+
+        self.observations.policy.height_scan = None
+
+        # ==========================================================
+        # ACTIONS CONFIGURATION
+        # ==========================================================
+        self.actions.joint_pos.scale = 0.25
+        self.actions.joint_pos.clip = {".*": (-100.0, 100.0)}
+
+        # ==========================================================
+        # EVENTS / DOMAIN RANDOMIZATION
+        # ==========================================================
+        self.events.add_base_mass.params["asset_cfg"].body_names = "base_.*"
+        self.events.add_base_mass.params["mass_distribution_params"] = (-0.5, 0.15)
+
+        self.events.base_com = None
+        self.events.base_external_force_torque = None
+
+        # Randomize joint reset slightly
+        self.events.reset_robot_joints.params["position_range"] = (0.5, 1.5)
+        self.events.reset_base.params = {
+            "pose_range": {"x": (-0.5, 0.5), "y": (-0.5, 0.5), "yaw": (-3.14, 3.14)},
+            "velocity_range": {
+                "x": (-0.5, 0.5),
+                "y": (-0.5, 0.5),
+                "z": (-0.5, 0.5),
+                "roll": (-0.5, 0.5),
+                "pitch": (-0.5, 0.5),
+                "yaw": (-0.5, 0.5),
+            },
+        }
+
+        # ==========================================================
+        # COMMANDS CONFIGURATION
+        # ==========================================================
+        self.commands.base_velocity.ranges.lin_vel_x = (0.0, 0.0)
+        self.commands.base_velocity.ranges.lin_vel_y = (0.2, 0.5)  # (-1.0, 0.0)
+        self.commands.base_velocity.ranges.ang_vel_z = (0.0, 0.0)
+
+        self.commands.base_velocity.rel_standing_envs = 0.02
+
+        # ==========================================================
+        # REWARDS CONFIGURATION
+        # ==========================================================
+        self.rewards.track_lin_vel_xy_exp.weight = 2.0
+        self.rewards.track_ang_vel_z_exp.weight = 0.5
+        self.rewards.flat_orientation_l2 = None
+        self.rewards.upright_orientation.weight = 2.0
+        self.rewards.lin_vel_z_l2.weight = -0.5
+        self.rewards.ang_vel_xy_l2.weight = -0.3
+
+        # ------------------------------------------
+        # self.rewards.feet_air_time.weight = 0.5
+        # self.rewards.feet_air_time.params["threshold"] = 0.4
+
+        # self.rewards.feet_air_time_penalty.weight = -0.01
+        # self.rewards.feet_air_time_penalty.params["threshold"] = 0.38
+        # ------------------------------------------
+        self.rewards.feet_air_time = None
+        self.rewards.feet_air_time_penalty = None
+
+        self.rewards.feet_lateral_sep_reward = None
+        self.rewards.arms_away_from_body = None
+        # self.rewards.feet_lateral_sep_reward.weight = 0.15
+        # self.rewards.arms_away_from_body.weight = 0.30
+        # self.rewards.arms_away_from_body.params["min_lateral_dist"] = 0.20
+
+        self.rewards.feet_slide = None
+        self.rewards.feet_mirror = None
+        # self.rewards.feet_mirror.weight = -0.02
+
+        self.rewards.action_rate_l2.weight = -0.005
+        # self.rewards.dof_acc_l2 = None
+        self.rewards.dof_torques_l2.weight = -5.0e-7
+        self.rewards.joint_vel_legs.weight = -0.2
+        self.rewards.joint_vel_neck.weight = -0.25
+        self.rewards.joint_vel_arms = None
+
+        self.rewards.ankle_dof_pos_limits.weight = -0.2
+        # self.rewards.knee_pose_deviation.weight = -0.0
+        # self.rewards.knee_dof_pos_limits.weight = -0.0
+        self.rewards.joint_deviation_arms.weight = -0.2
+        self.rewards.joint_deviation_neck.weight = -0.1
+        self.rewards.joint_deviation_legs.weight = -0.3
+
+        self.rewards.feet_step_sequence = None
+
+        # --- Termination penalty ---
+        self.rewards.termination_penalty.weight = -200.0
+
+        # ==========================================================
+        # TERMINATIONS CONFIGURATION
+        # ==========================================================
+        self.terminations.base_contact.params["sensor_cfg"].body_names = [
+            f"^(?!.*{self.foot_link_name}).*"
+        ]
+
+
+
+"""
+
+        self.scene.robot = HANU_A4_TEST_CFG.replace(prim_path="{ENV_REGEX_NS}/robot")
+
+        # ==========================================================
+        # OBSERVATIONS CONFIGURATION
+        # ==========================================================
+        # Scale observations for stable learning
+        # self.observations.policy.base_lin_vel.scale = 2.0
+        self.observations.policy.base_ang_vel.scale = 0.25
+        self.observations.policy.joint_pos.scale = 1.0
+        self.observations.policy.joint_vel.scale = 0.05
+
+        self.observations.policy.height_scan = None
+
+        # ==========================================================
+        # ACTIONS CONFIGURATION
+        # ==========================================================
+        self.actions.joint_pos.scale = 0.25
+        self.actions.joint_pos.clip = {".*": (-100.0, 100.0)}
+
+        # ==========================================================
+        # EVENTS / DOMAIN RANDOMIZATION
+        # ==========================================================
+        self.events.add_base_mass.params["asset_cfg"].body_names = "base_.*"
+        self.events.add_base_mass.params["mass_distribution_params"] = (-0.5, 0.15)
+
+        self.events.base_com = None
+        self.events.base_external_force_torque = None
+
+        # Randomize joint reset slightly
+        self.events.reset_robot_joints.params["position_range"] = (0.5, 1.5)
+        self.events.reset_base.params = {
+            "pose_range": {"x": (-0.5, 0.5), "y": (-0.5, 0.5), "yaw": (-3.14, 3.14)},
+            "velocity_range": {
+                "x": (-0.5, 0.5),
+                "y": (-0.5, 0.5),
+                "z": (-0.5, 0.5),
+                "roll": (-0.5, 0.5),
+                "pitch": (-0.5, 0.5),
+                "yaw": (-0.5, 0.5),
+            },
+        }
+
+        # ==========================================================
+        # COMMANDS CONFIGURATION
+        # ==========================================================
+        self.commands.base_velocity.ranges.lin_vel_x = (0.0, 0.0)
+        self.commands.base_velocity.ranges.lin_vel_y = (0.2, 0.5)  # (-1.0, 0.0)
+        self.commands.base_velocity.ranges.ang_vel_z = (0.0, 0.0)
+
+        self.commands.base_velocity.rel_standing_envs = 0.02
+
+        # ==========================================================
+        # REWARDS CONFIGURATION
+        # ==========================================================
+        self.rewards.track_lin_vel_xy_exp.weight = 2.0
+        self.rewards.track_ang_vel_z_exp.weight = 0.5
+        self.rewards.flat_orientation_l2 = None
+        self.rewards.upright_orientation.weight = 2.0
+        self.rewards.lin_vel_z_l2.weight = -0.5
+        self.rewards.ang_vel_xy_l2.weight = -0.3
+
+        # ------------------------------------------
+        self.rewards.feet_air_time.weight = 0.5
+        self.rewards.feet_air_time.params["threshold"] = 0.4
+
+        self.rewards.feet_air_time_penalty.weight = -0.01
+        self.rewards.feet_air_time_penalty.params["threshold"] = 0.38
+        # ------------------------------------------
+        # self.rewards.feet_air_time = None
+        # self.rewards.feet_air_time_penalty = None
+
+        self.rewards.feet_lateral_sep_reward = None
+        self.rewards.arms_away_from_body = None
+        # self.rewards.feet_lateral_sep_reward.weight = 0.15
+        # self.rewards.arms_away_from_body.weight = 0.30
+        # self.rewards.arms_away_from_body.params["min_lateral_dist"] = 0.20
+
+        # self.rewards.feet_slide = None
+        self.rewards.feet_slide.weight = -0.07
+        self.rewards.feet_mirror = None
+        # self.rewards.feet_mirror.weight = -0.02
+
+        self.rewards.action_rate_l2.weight = -0.005
+        # self.rewards.dof_acc_l2 = None
+        self.rewards.dof_torques_l2.weight = -5.0e-7
+        self.rewards.joint_vel_legs.weight = -0.2
+        self.rewards.joint_vel_neck.weight = -0.25
+        self.rewards.joint_vel_arms.weight = -0.1
+
+        self.rewards.ankle_dof_pos_limits.weight = 0.0
+        # self.rewards.knee_pose_deviation.weight = -0.0
+        # self.rewards.knee_dof_pos_limits.weight = -0.0
+        self.rewards.joint_deviation_arms.weight = -0.2
+        self.rewards.joint_deviation_neck.weight = -0.1
+        self.rewards.joint_deviation_legs.weight = -0.3
+
+        self.rewards.feet_step_sequence.weight = 0.1
+
+        self.rewards.ref_joint_pos = None
+        self.rewards.ref_joint_vel = None
+        self.rewards.foot_pos_tracking = None
+
+        # --- Termination penalty ---
+        self.rewards.termination_penalty.weight = -200.0
+
+        # ==========================================================
+        # TERMINATIONS CONFIGURATION
+        # ==========================================================
+        self.terminations.base_contact.params["sensor_cfg"].body_names = [
+            f"^(?!.*{self.foot_link_name}).*"
+        ]
+
+"""
