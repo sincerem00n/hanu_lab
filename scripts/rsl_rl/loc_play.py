@@ -327,10 +327,10 @@ def main(
     else:
         normalizer = None
 
-    # export
-    export_dir = os.path.join(log_dir, "exported")
-    export_policy_as_jit( policy_nn, normalizer=normalizer, path=export_dir, filename="policy.pt")
-    export_policy_as_onnx(policy_nn, normalizer=normalizer, path=export_dir, filename="policy.onnx")
+    # # export
+    # export_dir = os.path.join(log_dir, "exported")
+    # export_policy_as_jit( policy_nn, normalizer=normalizer, path=export_dir, filename="policy.pt")
+    # export_policy_as_onnx(policy_nn, normalizer=normalizer, path=export_dir, filename="policy.onnx")
 
     # ── simulation loop ───────────────────────────────────────────────────────
     dt          = env.unwrapped.step_dt
