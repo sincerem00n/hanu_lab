@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 """
-play_plot.py – run a trained RSL-RL policy and produce Command vs. Actual
+play_plot.py  run a trained RSL-RL policy and produce Command vs. Actual
                Velocity comparison plots (vx, vy, ωz) when the simulation ends.
 
 Usage (identical to play.py):
