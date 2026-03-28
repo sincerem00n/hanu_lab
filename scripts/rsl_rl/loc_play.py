@@ -43,7 +43,7 @@ parser.add_argument("--use_pretrained_checkpoint", action="store_true",
                     help="Use the pre-trained checkpoint from Nucleus.")
 parser.add_argument("--real-time",    action="store_true", default=False,
                     help="Run in real-time, if possible.")
-parser.add_argument("--plot_steps",   type=int, default=2000,
+parser.add_argument("--plot_steps",   type=int, default=1000,
                     help="Stop simulation and plot after N steps (0 = run until window closed).")
 parser.add_argument("--plot_env",     type=int, default=0,
                     help="Which environment index to record for plotting (default: 0).")
@@ -67,6 +67,7 @@ simulation_app  = app_launcher.app
 # ──────────────────────────────────────────────────────────────────────────────
 import os
 import time
+import csv
 
 import gymnasium as gym
 import torch
@@ -118,7 +119,7 @@ _PALETTE = {
     "bg":     "#FFFFFF",
     "fg":     "#212121",
     "grid":   "#BDBDBD",
-    "panel":  "#F5F5F5",
+    "panel":  "#FFFFFF",
 }
 
 
@@ -191,17 +192,35 @@ def plot_velocity_comparison(
         os.makedirs(os.path.dirname(os.path.abspath(save_path)), exist_ok=True)
         fig.savefig(save_path, dpi=150, bbox_inches="tight", facecolor=_PALETTE["bg"])
         print(f"[PLOT] Saved to: {save_path}")
-    else:
-        # Try interactive display; fall back to saving alongside the script.
-        try:
-            matplotlib.use("TkAgg")
-            plt.show()
-        except Exception:
-            fallback = os.path.join(os.path.dirname(__file__), "velocity_plot.png")
-            fig.savefig(fallback, dpi=150, bbox_inches="tight", facecolor=_PALETTE["bg"])
-            print(f"[PLOT] Interactive display unavailable – saved to: {fallback}")
-
+    
     plt.close(fig)
+
+
+def export_to_csv(
+    timestamps: list[float],
+    cmd_log:    list[np.ndarray],
+    vel_log:    list[np.ndarray],
+    save_dir:   str
+):
+    """Save velocity command and actual data to a CSV file."""
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir, exist_ok=True)
+    
+    filename = os.path.join(save_dir, "velocity_data.csv")
+    
+    headers = ["time", "vx_cmd", "vy_cmd", "wz_cmd", "vx_act", "vy_act", "wz_act"]
+    
+    with open(filename, 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(headers)
+        
+        for i in range(len(timestamps)):
+            row = [timestamps[i]]
+            row.extend(cmd_log[i].tolist())
+            row.extend(vel_log[i].tolist())
+            writer.writerow(row)
+            
+    print(f"[PLOT] Data exported to → {filename}")
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -429,12 +448,18 @@ def main(
     print(f"  Overall RMSE = {float(np.mean(rmse)):.4f}")
     print("==================================\n", flush=True)
 
-    # Auto-generate save path if none given
-    save_path = args_cli.save_plot
-    if not save_path:
-        save_path = os.path.join(log_dir, "velocity_comparison.png")
+    # ── determine output directory ────────────────────────────────────────────
+    save_dir = args_cli.save_plot or os.path.join(log_dir, "velocity_plots")
+    os.makedirs(save_dir, exist_ok=True)
 
-    plot_velocity_comparison(timestamps, cmd_log, vel_log, save_path=save_path, rmse=rmse)
+    # ── Plot 1: Velocity Comparison ───────────────────────────────────────────
+    plot_path = os.path.join(save_dir, "velocity_comparison.png")
+    plot_velocity_comparison(timestamps, cmd_log, vel_log, save_path=plot_path, rmse=rmse)
+
+    # ── Export 2: CSV Data ────────────────────────────────────────────────────
+    export_to_csv(timestamps, cmd_log, vel_log, save_dir=save_dir)
+
+    print(f"[PLOT] All plots and data saved to: {save_dir}")
 
 
 # ──────────────────────────────────────────────────────────────────────────────
