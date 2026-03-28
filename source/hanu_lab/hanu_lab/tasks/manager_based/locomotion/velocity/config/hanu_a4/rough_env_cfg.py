@@ -12,7 +12,7 @@ from pxr import UsdPhysics
 ###########################
 # Pre-defined configs
 ###########################
-from hanu_lab.assets import HANU_A4_CFG, HANU_A4_IM_CFG, HANU_A4_TEST_CFG
+from hanu_lab.assets import HANU_A4_CFG, HANU_A4_IM_CFG, HANU_A4_TEST_CFG, HANU_A4_FW_CFG
 
 from isaaclab.managers import RewardTermCfg as RewTerm
 from isaaclab.managers import TerminationTermCfg as DoneTerm
@@ -709,6 +709,9 @@ class HanuA4RoughEnvCfgV2(HanuA4RoughEnvCfg):
 
         self.observations.policy.height_scan = None
 
+        self.observations.policy.gait_phase = None
+        self.observations.policy.target_q = None
+
         # ==========================================================
         # ACTIONS CONFIGURATION
         # ==========================================================
@@ -803,11 +806,12 @@ class HanuA4RoughEnvCfgV2(HanuA4RoughEnvCfg):
             f"^(?!.*{self.foot_link_name}).*"
         ]
 
+@configclass
+class HanuA4RoughEnvCfgV3(HanuA4RoughEnvCfg):
+    def __post_init__(self):
+        super().__post_init__()
 
-
-"""
-
-        self.scene.robot = HANU_A4_TEST_CFG.replace(prim_path="{ENV_REGEX_NS}/robot")
+        self.scene.robot = HANU_A4_FW_CFG.replace(prim_path="{ENV_REGEX_NS}/robot")
 
         # ==========================================================
         # OBSERVATIONS CONFIGURATION
@@ -819,6 +823,8 @@ class HanuA4RoughEnvCfgV2(HanuA4RoughEnvCfg):
         self.observations.policy.joint_vel.scale = 0.05
 
         self.observations.policy.height_scan = None
+        self.observations.policy.gait_phase = None
+        self.observations.policy.target_q = None
 
         # ==========================================================
         # ACTIONS CONFIGURATION
@@ -918,5 +924,3 @@ class HanuA4RoughEnvCfgV2(HanuA4RoughEnvCfg):
         self.terminations.base_contact.params["sensor_cfg"].body_names = [
             f"^(?!.*{self.foot_link_name}).*"
         ]
-
-"""
