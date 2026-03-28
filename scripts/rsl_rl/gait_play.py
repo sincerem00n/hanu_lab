@@ -53,7 +53,7 @@ parser.add_argument("--use_pretrained_checkpoint", action="store_true",
                     help="Use the pre-trained checkpoint from Nucleus.")
 parser.add_argument("--real-time",    action="store_true", default=False,
                     help="Run in real-time, if possible.")
-parser.add_argument("--plot_steps",   type=int, default=2000,
+parser.add_argument("--plot_steps",   type=int, default=1000,
                     help="Stop simulation and plot after N steps (0 = run until window closed).")
 parser.add_argument("--plot_env",     type=int, default=0,
                     help="Which environment index to record for plotting (default: 0).")
@@ -77,6 +77,7 @@ simulation_app = app_launcher.app
 # ──────────────────────────────────────────────────────────────────────────────
 import os
 import time
+import csv
 from collections import defaultdict
 
 import gymnasium as gym
@@ -123,28 +124,31 @@ import hanu_lab.tasks  # noqa: F401
 # The script will search for them in the articulation DOF name list
 # and handle gracefully if any are absent.
 _KEY_JOINTS = [
-    "L_hip_pitch",
-    "R_hip_pitch",
-    "L_knee_pitch",
-    "R_knee_pitch",
+    # "L_hip_pitch",
+    # "R_hip_pitch",
+    # "L_knee_pitch",
+    # "R_knee_pitch",
+    "L_shoulder_pitch",
+    "R_shoulder_pitch",
 ]
 
 # Color map: one colour per joint
 _JOINT_COLORS = {
-    "L_hip_pitch":  "#1565C0",   # deep blue
-    "R_hip_pitch":  "#0097A7",   # teal
-    "L_knee_pitch": "#E65100",   # deep orange
-    "R_knee_pitch": "#7B1FA2",   # purple
+    # "L_hip_pitch":      "#1f77b4",
+    # "R_hip_pitch":      "#ff7f0e",
+    # "L_knee_pitch":     "#2ca02c",
+    # "R_knee_pitch":     "#d62728",
+    "L_shoulder_pitch": "#1f77b4",
+    "R_shoulder_pitch": "#ff7f0e",
 }
 
 # ── Foot body names ────────────────────────────────────────────────────────────
-# Edit these to match the rigid-body names in your URDF/USD.
 # The script tries exact match first, then case-insensitive partial match.
 _FOOT_BODIES = ["L_foot", "R_foot"]
 
 _FOOT_COLORS = {
-    "L_foot": "#1565C0",   # blue  – left
-    "R_foot": "#E65100",   # orange – right
+    "L_foot": "#1f77b4",   # blue  – left
+    "R_foot": "#d62728",   # red – right
 }
 
 # A foot is considered "in stance" when its world-Z height is at or below this
@@ -159,7 +163,7 @@ _PALETTE = {
     "bg":    "#FFFFFF",
     "fg":    "#212121",
     "grid":  "#BDBDBD",
-    "panel": "#F5F5F5",
+    "panel": "#FFFFFF",  # white panel for cleaner look
 }
 
 
@@ -170,13 +174,14 @@ _PALETTE = {
 def _styled_ax(ax):
     """Apply common dark / light style to an axes."""
     ax.set_facecolor(_PALETTE["panel"])
-    ax.tick_params(colors=_PALETTE["fg"])
+    ax.tick_params(colors=_PALETTE["fg"], labelsize=10)
     ax.yaxis.label.set_color(_PALETTE["fg"])
     ax.xaxis.label.set_color(_PALETTE["fg"])
     ax.title.set_color(_PALETTE["fg"])
     for spine in ax.spines.values():
         spine.set_edgecolor(_PALETTE["grid"])
-    ax.grid(True, color=_PALETTE["grid"], linewidth=0.6, linestyle="--")
+        spine.set_alpha(0.5)
+    ax.grid(True, color=_PALETTE["grid"], linewidth=0.8, linestyle=":", alpha=0.7)
 
 
 def plot_joint_trajectories(
@@ -196,14 +201,14 @@ def plot_joint_trajectories(
         print("[GAIT] No joint position data to plot (trajectory).")
         return
 
-    fig = plt.figure(figsize=(14, 3.5 * n), facecolor=_PALETTE["bg"])
+    fig = plt.figure(figsize=(14, 4.0 * n), facecolor=_PALETTE["bg"])
     fig.suptitle(
         "Joint Angle Trajectories  (position vs. time)",
         color=_PALETTE["fg"], fontsize=16, fontweight="bold", y=0.99,
     )
 
     gs = gridspec.GridSpec(n, 1, hspace=0.55, left=0.08, right=0.97,
-                           top=0.94, bottom=0.06)
+                           top=0.93, bottom=0.06)
 
     for row, jname in enumerate(joints):
         q   = pos_logs[jname]          # (T,)
@@ -212,31 +217,36 @@ def plot_joint_trajectories(
         ax = fig.add_subplot(gs[row])
         _styled_ax(ax)
 
-        ax.plot(timestamps, np.degrees(q), color=col, linewidth=1.6, label=jname)
+        ax.plot(timestamps, np.degrees(q), color=col, linewidth=2.0, label=jname)
 
         # Highlight every step-cycle: shade alternating half-periods
         # (Simple zero-crossing of a reference joint for visual guide)
-        ax.axhline(0, color=_PALETTE["grid"], linewidth=0.8, linestyle=":")
+        ax.axhline(0, color=_PALETTE["grid"], linewidth=1.0, linestyle=":")
 
-        ax.set_title(f"{jname.replace('_', ' ')}", fontsize=11, pad=3, color=_PALETTE["fg"])
-        ax.set_ylabel("Joint angle [°]", fontsize=9)
+        ax.set_title(f"{jname.replace('_', ' ')}", fontsize=14, fontweight='bold', pad=8, color=_PALETTE["fg"])
+        ax.set_ylabel("Joint angle [°]", fontsize=12)
         if row == n - 1:
-            ax.set_xlabel("Time  [s]", fontsize=10)
+            ax.set_xlabel("Time  [s]", fontsize=12)
 
         # Annotate range
         qd = np.degrees(q)
         ax.text(
             0.01, 0.95,
             f"range: [{qd.min():.1f}°, {qd.max():.1f}°]  |  peak-to-peak: {qd.ptp():.1f}°",
-            transform=ax.transAxes, fontsize=8, verticalalignment="top",
+            transform=ax.transAxes, fontsize=10, verticalalignment="top",
             color="#455A64",
-            bbox=dict(boxstyle="round,pad=0.25", facecolor="#ECEFF1",
-                      edgecolor=_PALETTE["grid"], alpha=0.85),
+            bbox=dict(boxstyle="round,pad=0.25", facecolor="#FFFFFF",
+                      edgecolor=_PALETTE["grid"], alpha=0.9),
         )
 
-        ax.legend(loc="upper right", fontsize=9,
-                  facecolor=_PALETTE["panel"], edgecolor=_PALETTE["grid"],
+        ax.legend(loc="upper right", fontsize=11,
+                  facecolor="#FFFFFF", edgecolor=_PALETTE["grid"],
                   labelcolor=_PALETTE["fg"])
+
+        # ── Aggressive Outlier cropping: focus on 5th-95th percentile ──────
+        # y_lims = np.percentile(qd, [2, 98])
+        # margin = max((y_lims[1] - y_lims[0]) * 0.10, 1.0)
+        # ax.set_ylim(y_lims[0] - margin, y_lims[1] + margin)
 
     _save_or_show(fig, save_path, "joint_trajectories.png")
 
@@ -304,9 +314,9 @@ def plot_phase_portraits(
         cbar.ax.tick_params(colors=_PALETTE["fg"])
 
         ax.set_title(f"{jname.replace('_', ' ')}  –  phase portrait",
-                     fontsize=11, pad=4, color=_PALETTE["fg"])
-        ax.set_xlabel("Joint angle  [°]", fontsize=9)
-        ax.set_ylabel("Joint velocity  [°/s]", fontsize=9)
+                     fontsize=14, fontweight='bold', pad=8, color=_PALETTE["fg"])
+        ax.set_xlabel("Joint angle  [°]", fontsize=12)
+        ax.set_ylabel("Joint velocity  [°/s]", fontsize=12)
 
         # Annotate with enclosure area (crude measure of gait energy)
         try:
@@ -317,16 +327,24 @@ def plot_phase_portraits(
             ax.text(
                 0.02, 0.97,
                 f"Convex-hull area: {area:.2f} °²/s",
-                transform=ax.transAxes, fontsize=8, verticalalignment="top",
+                transform=ax.transAxes, fontsize=10, verticalalignment="top",
                 color="#37474F",
-                bbox=dict(boxstyle="round,pad=0.25", facecolor="#ECEFF1",
-                          edgecolor=_PALETTE["grid"], alpha=0.85),
+                bbox=dict(boxstyle="round,pad=0.25", facecolor="#FFFFFF",
+                          edgecolor=_PALETTE["grid"], alpha=0.9),
             )
         except Exception:
             pass   # scipy not available or hull failed
 
-        ax.legend(loc="lower right", fontsize=8,
-                  facecolor=_PALETTE["panel"], edgecolor=_PALETTE["grid"],
+        # ── Aggressive Outlier cropping: 2th-98th percentile ───────────────
+        # q_lims = np.percentile(q, [2, 98])
+        # qd_lims = np.percentile(qdot, [2, 98])
+        # q_margin = max((q_lims[1] - q_lims[0]) * 0.1, 1.0)
+        # qd_margin = max((qd_lims[1] - qd_lims[0]) * 0.1, 5.0)
+        # ax.set_xlim(q_lims[0] - q_margin, q_lims[1] + q_margin)
+        # ax.set_ylim(qd_lims[0] - qd_margin, qd_lims[1] + qd_margin)
+
+        ax.legend(loc="lower right", fontsize=11,
+                  facecolor="#FFFFFF", edgecolor=_PALETTE["grid"],
                   labelcolor=_PALETTE["fg"])
 
     # Hide unused subplots
@@ -343,7 +361,7 @@ def plot_foot_clearance(
     save_path:   str = "",
 ):
     """
-    Plot 3 – Foot Clearance (world-Z height vs. time).
+    Plot 3  Foot Clearance (world-Z height vs. time).
 
     For each foot the plot shows:
       • The raw height signal (solid coloured line).
@@ -384,9 +402,9 @@ def plot_foot_clearance(
         # ── ground / stance reference ─────────────────────────────────────
         ax.axhline(0.0, color="#424242", linewidth=1.0, linestyle="-",
                    label="Ground (z = 0)", zorder=1)
-        ax.axhline(_STANCE_THRESHOLD_M, color="#78909C", linewidth=0.8,
-                   linestyle=":", label=f"Stance threshold ({_STANCE_THRESHOLD_M*100:.0f} cm)",
-                   zorder=1)
+        # ax.axhline(_STANCE_THRESHOLD_M, color="#78909C", linewidth=0.8,
+        #            linestyle=":", label=f"Stance threshold ({_STANCE_THRESHOLD_M*100:.0f} cm)",
+        #            zorder=1)
 
         # ── shade stance phases ───────────────────────────────────────────
         in_stance = z <= _STANCE_THRESHOLD_M
@@ -400,10 +418,10 @@ def plot_foot_clearance(
             stance_ends = np.concatenate([stance_ends, [len(z)]])
         for s, e in zip(stance_starts, stance_ends):
             ax.axvspan(timestamps[s], timestamps[min(e, len(timestamps)-1)],
-                       alpha=0.18, color="#607D8B", zorder=0)
+                       alpha=0.18, color="#FFFFFF", zorder=0)
 
         # ── main height trace ─────────────────────────────────────────────
-        ax.plot(timestamps, z * 100, color=col, linewidth=1.6,
+        ax.plot(timestamps, z * 100, color=col, linewidth=2.0,
                 label=fname, zorder=3)   # convert m → cm for readability
 
         # ── toe-drag detection: swing phase but height ≤ drag threshold ──
@@ -413,7 +431,7 @@ def plot_foot_clearance(
         if drag_count:
             ax.scatter(
                 timestamps[is_toe_drag], z[is_toe_drag] * 100,
-                color="#D32F2F", s=18, zorder=5,
+                color="#D32F2F", s=25, zorder=5,
                 label=f"Toe drag ✗ ({drag_count} samples)",
             )
 
@@ -424,33 +442,35 @@ def plot_foot_clearance(
 
         drag_label = "⚠ TOE DRAG" if drag_count else "✓ No toe drag"
         drag_color = "#B71C1C" if drag_count else "#1B5E20"
-        face_color = "#FFEBEE" if drag_count else "#E8F5E9"
+        face_color = "#FFFFFF" if drag_count else "#FFFFFF" # Keep white background
         edge_color = "#EF9A9A" if drag_count else "#A5D6A7"
 
         ax.text(
             0.01, 0.96,
             (f"Min swing clearance: {min_swing_cm:.1f} cm  |  "
              f"Max: {max_swing_cm:.1f} cm  |  {drag_label}"),
-            transform=ax.transAxes, fontsize=8, verticalalignment="top",
+            transform=ax.transAxes, fontsize=10, verticalalignment="top",
             color=drag_color,
             bbox=dict(boxstyle="round,pad=0.3", facecolor=face_color,
                       edgecolor=edge_color, alpha=0.9),
         )
 
         ax.set_title(f"{fname.replace('_', ' ')}  –  foot clearance",
-                     fontsize=11, pad=3, color=_PALETTE["fg"])
-        ax.set_ylabel("Height  [cm]", fontsize=9)
+                     fontsize=14, fontweight='bold', pad=8, color=_PALETTE["fg"])
+        ax.set_ylabel("Height  [cm]", fontsize=12)
         if row == n - 1:
-            ax.set_xlabel("Time  [s]", fontsize=10)
+            ax.set_xlabel("Time  [s]", fontsize=12)
 
-        ax.legend(loc="upper right", fontsize=8,
-                  facecolor=_PALETTE["panel"], edgecolor=_PALETTE["grid"],
+        ax.legend(loc="upper right", fontsize=11,
+                  facecolor="#FFFFFF", edgecolor=_PALETTE["grid"],
                   labelcolor=_PALETTE["fg"])
 
-        # Ensure zero is always in view with a little headroom
-        y_lo = min(float(z.min()) * 100 - 0.5, -0.5)
-        y_hi = max(float(z.max()) * 100 + 1.0, 5.0)
-        ax.set_ylim(y_lo, y_hi)
+        # ── Aggressive Outlier cropping: 5th-95th percentile ───────────────
+        z_cm = z * 100
+        low  = np.percentile(z_cm, 2)
+        high = np.percentile(z_cm, 98)
+        margin = 0.2
+        ax.set_ylim(low - margin, high + margin)
 
     _save_or_show(fig, save_path, "foot_clearance.png")
 
@@ -466,6 +486,47 @@ def _save_or_show(fig, save_dir: str, filename: str):
     fig.savefig(out, dpi=150, bbox_inches="tight", facecolor=fig.get_facecolor())
     print(f"[GAIT] Saved → {out}")
     plt.close(fig)
+
+
+def export_to_csv(
+    timestamps: np.ndarray,
+    pos_np:     dict[str, np.ndarray],
+    vel_np:     dict[str, np.ndarray],
+    foot_np:    dict[str, np.ndarray],
+    save_dir:   str
+):
+    """Save all tracked data to a single consolidated CSV file."""
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir, exist_ok=True)
+    
+    filename = os.path.join(save_dir, "gait_data.csv")
+    
+    # Collect all headers
+    headers = ["time"]
+    joint_names = sorted(pos_np.keys())
+    for j in joint_names:
+        headers.append(f"{j}_pos_rad")
+        headers.append(f"{j}_vel_radps")
+    
+    foot_names = sorted(foot_np.keys())
+    for f in foot_names:
+        headers.append(f"{f}_z_m")
+    
+    # Write rows
+    with open(filename, 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(headers)
+        
+        for i in range(len(timestamps)):
+            row = [timestamps[i]]
+            for j in joint_names:
+                row.append(pos_np[j][i])
+                row.append(vel_np[j][i])
+            for fn in foot_names:
+                row.append(foot_np[fn][i])
+            writer.writerow(row)
+            
+    print(f"[GAIT] Data exported to → {filename}")
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -754,15 +815,15 @@ def main(
 
     # Normalise foot heights so that the lowest recorded stance contact = 0.
     # This removes any constant offset from terrain height or robot spawn height.
-    for fname, z in foot_np.items():
-        stance_mask = z <= (z.min() + _STANCE_THRESHOLD_M)
-        if stance_mask.any():
-            ground_ref = float(z[stance_mask].mean())
-        else:
-            ground_ref = float(z.min())
-        foot_np[fname] = z - ground_ref
-        print(f"[GAIT] '{fname}' ground ref = {ground_ref:.4f} m  "
-              f"(normalised so stance contact ≈ 0)")
+    # for fname, z in foot_np.items():
+    #     stance_mask = z <= (z.min() + _STANCE_THRESHOLD_M)
+    #     if stance_mask.any():
+    #         ground_ref = float(z[stance_mask].mean())
+    #     else:
+    #         ground_ref = float(z.min())
+    #     foot_np[fname] = z - ground_ref
+    #     print(f"[GAIT] '{fname}' ground ref = {ground_ref:.4f} m  "
+    #           f"(normalised so stance contact ≈ 0)")
 
     # ── print summary ─────────────────────────────────────────────────────────
     print("\n========== JOINT SUMMARY ==========")
@@ -797,7 +858,10 @@ def main(
     else:
         print("[GAIT] Skipping foot clearance plot (no foot bodies found).")
 
-    print(f"[GAIT] All plots saved to: {save_dir}")
+    # ── Export 4: CSV Data ────────────────────────────────────────────────────
+    export_to_csv(t_arr, pos_np, vel_np, foot_np, save_dir=save_dir)
+
+    print(f"[GAIT] All plots and data saved to: {save_dir}")
 
 
 # ──────────────────────────────────────────────────────────────────────────────
