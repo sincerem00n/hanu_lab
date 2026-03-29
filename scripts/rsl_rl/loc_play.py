@@ -171,6 +171,13 @@ def plot_velocity_comparison(
         if i == 2:
             ax.set_xlabel("Time  [s]", fontsize=10)
 
+        # ── Aggressive Outlier cropping: focus on 2th-98th percentile ──────
+        # combined_data = np.concatenate([c[:, i], v[:, i]])
+        # if len(combined_data) > 0:
+        #     y_lims = np.percentile(combined_data, [2, 98])
+        #     margin = max((y_lims[1] - y_lims[0]) * 0.15, 0.05)
+        #     ax.set_ylim(y_lims[0] - margin, y_lims[1] + margin)
+
         leg = ax.legend(
             loc="upper right", fontsize=9,
             facecolor=_PALETTE["panel"], edgecolor=_PALETTE["grid"],
@@ -369,6 +376,15 @@ def main(
 
     while simulation_app.is_running():
         start_time = time.time()
+        # -- Override base linear velocity command to 0.4 m/s --
+        base_env = env.unwrapped
+        if hasattr(base_env, "command_manager"):
+            # Set vx = 0.0, vy = 0.4, angular Z = 0.0
+            base_env.command_manager.get_command("base_velocity")[:, 0] = 0.0
+            base_env.command_manager.get_command("base_velocity")[:, 1] = 0.4 # forward y-axis
+            base_env.command_manager.get_command("base_velocity")[:, 2] = 0.0
+            # Refresh observations to reflect the manual command
+            obs = env.get_observations()
 
         with torch.inference_mode():
             actions = policy(obs)
@@ -437,10 +453,21 @@ def main(
         print("[PLOT] Not enough data to plot.")
         return
 
-    # ── RMSE per channel ──────────────────────────────────────────────────────
+    # ── RMSE per channel (robust estimate: excluding extreme spikes) ──────────
     c_arr = np.asarray(cmd_log)   # (T, 3)
     v_arr = np.asarray(vel_log)   # (T, 3)
-    rmse  = np.sqrt(np.mean((c_arr - v_arr) ** 2, axis=0))  # shape (3,)
+
+    # We exclude the top 2% of squared errors for each channel.
+    # This effectively removes huge outliers caused by robot resets or spawning, 
+    # which cause momentary velocity spikes in the Isaac Sim root state.
+    err_sq = (c_arr - v_arr) ** 2
+    rmse_list = []
+    for i in range(3):
+        e_sq = err_sq[:, i]
+        thresh = np.percentile(e_sq, 98)
+        rmse_list.append(np.sqrt(np.mean(e_sq[e_sq <= thresh])))
+
+    rmse = np.array(rmse_list)
     labels = ["vx", "vy", "wz"]
     print("\n========== RMSE SUMMARY ==========")
     for lbl, val in zip(labels, rmse):

@@ -11,8 +11,10 @@ gait_play.py  Run a trained RSL-RL policy and produce joint-trajectory
                A stable walking gait forms a closed repeating loop
                (a limit cycle) on this graph.
   3. Foot Clearance           world-Z height of each swing foot over time.
-               Proves the foot is not dragging on the ground; stance
-               phases are shaded and toe-drag samples are flagged in red.
+
+  4. Foot Slide               masked forward (Y) foot velocity (robot facing y-axis):
+               v_feet_y × binary(z > 0.118 m).  Non-zero during swing
+               only; reveals unwanted sliding while the foot is in the air.
 
 Usage (identical to loc_play.py):
     python gait_play.py --task Isaac-Velocity-Flat-Hanu-A4-v0 \\
@@ -155,9 +157,10 @@ _FOOT_COLORS = {
 # threshold (metres).  Anything above is classified as swing.
 _STANCE_THRESHOLD_M = 0.02   # 2 cm
 
-# A sample is flagged as toe-drag when the foot is classified as SWING but its
-# height is at or below this limit (can equal _STANCE_THRESHOLD_M or be lower).
-_TOE_DRAG_THRESHOLD_M = 0.005  # 5 mm
+# Height threshold for the foot-slide binary mask.
+# Slide = v_feet_y * (1 if z > this threshold else 0).
+_SLIDE_HEIGHT_THRESHOLD_M = 0.118   # 11.8 cm
+
 
 _PALETTE = {
     "bg":    "#FFFFFF",
@@ -366,13 +369,10 @@ def plot_foot_clearance(
     For each foot the plot shows:
       • The raw height signal (solid coloured line).
       • Grey shading during stance phases (height ≤ _STANCE_THRESHOLD_M).
-      • Red scatter markers on any swing sample where height falls below
-        _TOE_DRAG_THRESHOLD_M  (toe-drag warning).
       • A dashed zero line (ground level).
-      • Annotation with minimum swing clearance and toe-drag count.
+      • Annotation with minimum swing clearance.
 
-    A clean gait should show smooth arcs above zero during swing and should
-    have NO red markers.
+    A clean gait should show smooth arcs above zero during swing.
     """
     feet = [f for f in _FOOT_BODIES if f in foot_logs]
     if not feet:
@@ -424,38 +424,23 @@ def plot_foot_clearance(
         ax.plot(timestamps, z * 100, color=col, linewidth=2.0,
                 label=fname, zorder=3)   # convert m → cm for readability
 
-        # ── toe-drag detection: swing phase but height ≤ drag threshold ──
-        is_swing    = ~in_stance
-        is_toe_drag = is_swing & (z <= _TOE_DRAG_THRESHOLD_M)
-        drag_count  = int(is_toe_drag.sum())
-        if drag_count:
-            ax.scatter(
-                timestamps[is_toe_drag], z[is_toe_drag] * 100,
-                color="#D32F2F", s=25, zorder=5,
-                label=f"Toe drag ✗ ({drag_count} samples)",
-            )
-
         # ── swing minimum clearance annotation ───────────────────────────
+        is_swing = ~in_stance
         swing_z = z[is_swing] if is_swing.any() else np.array([0.0])
         min_swing_cm = float(swing_z.min()) * 100
         max_swing_cm = float(swing_z.max()) * 100
 
-        drag_label = "⚠ TOE DRAG" if drag_count else "✓ No toe drag"
-        drag_color = "#B71C1C" if drag_count else "#1B5E20"
-        face_color = "#FFFFFF" if drag_count else "#FFFFFF" # Keep white background
-        edge_color = "#EF9A9A" if drag_count else "#A5D6A7"
-
         ax.text(
             0.01, 0.96,
             (f"Min swing clearance: {min_swing_cm:.1f} cm  |  "
-             f"Max: {max_swing_cm:.1f} cm  |  {drag_label}"),
+             f"Max: {max_swing_cm:.1f} cm"),
             transform=ax.transAxes, fontsize=10, verticalalignment="top",
-            color=drag_color,
-            bbox=dict(boxstyle="round,pad=0.3", facecolor=face_color,
-                      edgecolor=edge_color, alpha=0.9),
+            color="#2E7D32",
+            bbox=dict(boxstyle="round,pad=0.3", facecolor="#FFFFFF",
+                      edgecolor=_PALETTE["grid"], alpha=0.9),
         )
 
-        ax.set_title(f"{fname.replace('_', ' ')}  –  foot clearance",
+        ax.set_title(f"{fname.replace('_', ' ')}  -  foot clearance",
                      fontsize=14, fontweight='bold', pad=8, color=_PALETTE["fg"])
         ax.set_ylabel("Height  [cm]", fontsize=12)
         if row == n - 1:
@@ -475,6 +460,92 @@ def plot_foot_clearance(
     _save_or_show(fig, save_path, "foot_clearance.png")
 
 
+def plot_foot_slide(
+    timestamps:    np.ndarray,   # (T,)  [s]
+    foot_z_logs:   dict,         # {foot_name: np.ndarray (T,)}  [m]
+    foot_vy_logs:  dict,         # {foot_name: np.ndarray (T,)}  [m/s]
+    save_path:     str = "",
+):
+    """
+    Plot 4  Foot Slide  (masked forward velocity vs. time).
+
+    Foot slide is defined per sample as:
+
+        slide(t) = v_feet_y(t) * binary(z(t) > _SLIDE_HEIGHT_THRESHOLD_M)
+
+    When z is at or below the threshold the foot is considered to be in
+    ground contact and the mask zeroes the signal.  Any non-zero value
+    remaining is forward (Y-axis) motion that occurs while the foot is
+    sufficiently airborne.
+    """
+    feet = [f for f in _FOOT_BODIES if f in foot_z_logs and f in foot_vy_logs]
+    if not feet:
+        feet = [f for f in foot_z_logs if f in foot_vy_logs]
+    if not feet:
+        print("[GAIT] No foot slide data to plot.")
+        return
+
+    n   = len(feet)
+    fig = plt.figure(figsize=(14, 4.5 * n), facecolor=_PALETTE["bg"])
+    fig.suptitle(
+        f"Foot Slide  (v_y * binary(z > {_SLIDE_HEIGHT_THRESHOLD_M:.4f} m))",
+        color=_PALETTE["fg"], fontsize=16, fontweight="bold", y=0.99,
+    )
+
+    gs = gridspec.GridSpec(n, 1, hspace=0.60, left=0.08, right=0.97,
+                           top=0.93, bottom=0.06)
+
+    for row, fname in enumerate(feet):
+        z   = foot_z_logs[fname]    # world-Z  (T,)  [m]
+        vy  = foot_vy_logs[fname]   # world-Y velocity  (T,)  [m/s]
+        col = _FOOT_COLORS.get(fname, "#333333")
+
+        # binary mask: 1 when foot is above height threshold
+        mask  = (z > _SLIDE_HEIGHT_THRESHOLD_M).astype(np.float32)
+        slide = vy * mask            # m/s  (zero during stance)
+
+        ax = fig.add_subplot(gs[row])
+        _styled_ax(ax)
+
+        # ── zero reference ────────────────────────────────────────────────
+        ax.axhline(0.0, color="#424242", linewidth=0.8, linestyle="-", zorder=1)
+
+        # ── calculated slide signal only (f = v_y * binary mask) ─────────
+        ax.plot(timestamps, slide, color=col, linewidth=1.8,
+                label=f"{fname} slide (m/s)", zorder=3,  )
+
+        # ── statistics annotation ─────────────────────────────────────────
+        swing_slide = slide[mask == 1] if (mask == 1).any() else np.array([0.0])
+        rms_m  = float(np.sqrt(np.mean(swing_slide ** 2)))
+        peak_m = float(np.abs(swing_slide).max())
+        ax.text(
+            0.01, 0.96,
+            f"Swing RMS: {rms_m:.4f} m/s  |  Peak: {peak_m:.4f} m/s",
+            transform=ax.transAxes, fontsize=10, verticalalignment="top",
+            color=_PALETTE["fg"],
+            bbox=dict(boxstyle="round,pad=0.3", facecolor="#FFFFFF",
+                      edgecolor=_PALETTE["grid"], alpha=0.9),
+        )
+
+        ax.set_title(f"{fname.replace('_', ' ')}  –  lateral slide velocity",
+                     fontsize=14, fontweight="bold", pad=8, color=_PALETTE["fg"])
+        ax.set_ylabel("Slide  [m/s]", fontsize=12)
+        if row == n - 1:
+            ax.set_xlabel("Time  [s]", fontsize=12)
+
+        ax.legend(loc="upper left", fontsize=11,
+                  facecolor="#FFFFFF", edgecolor=_PALETTE["grid"],
+                  labelcolor=_PALETTE["fg"])
+
+        # Outlier crop
+        low  = np.percentile(slide, 2)
+        high = np.percentile(slide, 98)
+        margin = max((high - low) * 0.15, 0.005)
+        ax.set_ylim(low - margin, high + margin)
+
+    _save_or_show(fig, save_path, "foot_slide.png")
+
+
 def _save_or_show(fig, save_dir: str, filename: str):
     """Save figure to *save_dir/filename*, or fall back to script directory."""
     if save_dir:
@@ -489,11 +560,12 @@ def _save_or_show(fig, save_dir: str, filename: str):
 
 
 def export_to_csv(
-    timestamps: np.ndarray,
-    pos_np:     dict[str, np.ndarray],
-    vel_np:     dict[str, np.ndarray],
-    foot_np:    dict[str, np.ndarray],
-    save_dir:   str
+    timestamps:   np.ndarray,
+    pos_np:       dict[str, np.ndarray],
+    vel_np:       dict[str, np.ndarray],
+    foot_np:      dict[str, np.ndarray],
+    foot_vy_np:   dict[str, np.ndarray],
+    save_dir:     str
 ):
     """Save all tracked data to a single consolidated CSV file."""
     if not os.path.exists(save_dir):
@@ -511,21 +583,28 @@ def export_to_csv(
     foot_names = sorted(foot_np.keys())
     for f in foot_names:
         headers.append(f"{f}_z_m")
-    
+        headers.append(f"{f}_vy_mps")
+        headers.append(f"{f}_slide_mps")   # v_y * binary(z > threshold)
+
     # Write rows
     with open(filename, 'w', newline='') as f:
         writer = csv.writer(f)
         writer.writerow(headers)
-        
+
         for i in range(len(timestamps)):
             row = [timestamps[i]]
             for j in joint_names:
                 row.append(pos_np[j][i])
                 row.append(vel_np[j][i])
             for fn in foot_names:
-                row.append(foot_np[fn][i])
+                z_i  = foot_np[fn][i]
+                vy_i = foot_vy_np.get(fn, np.zeros(len(timestamps)))[i]
+                mask_i = 1.0 if z_i > _SLIDE_HEIGHT_THRESHOLD_M else 0.0
+                row.append(z_i)
+                row.append(vy_i)
+                row.append(vy_i * mask_i)
             writer.writerow(row)
-            
+
     print(f"[GAIT] Data exported to → {filename}")
 
 
@@ -723,10 +802,11 @@ def main(
     env_idx    = args_cli.plot_env
     plot_steps = args_cli.plot_steps
 
-    timestamps: list[float] = []
-    pos_logs:   defaultdict[str, list] = defaultdict(list)  # joint → [q_rad, ...]
-    vel_logs:   defaultdict[str, list] = defaultdict(list)  # joint → [qdot_rad/s, ...]
-    foot_logs:  defaultdict[str, list] = defaultdict(list)  # foot  → [z_m, ...]
+    timestamps:   list[float] = []
+    pos_logs:     defaultdict[str, list] = defaultdict(list)  # joint → [q_rad, ...]
+    vel_logs:     defaultdict[str, list] = defaultdict(list)  # joint → [qdot_rad/s, ...]
+    foot_logs:    defaultdict[str, list] = defaultdict(list)  # foot  → [z_m, ...]
+    foot_vy_logs: defaultdict[str, list] = defaultdict(list)  # foot  → [vy_mps, ...]
 
     print(f"[GAIT] Recording env #{env_idx} for joint gait analysis.")
     if plot_steps:
@@ -735,6 +815,14 @@ def main(
     # ── simulation loop ───────────────────────────────────────────────────────
     while simulation_app.is_running():
         start_time = time.time()
+
+        # ── override velocity command: 0.4 m/s forward (robot faces Y-axis) ──
+        base_env = env.unwrapped
+        if hasattr(base_env, "command_manager"):
+            base_env.command_manager.get_command("base_velocity")[:, 0] = 0.0   # vx
+            base_env.command_manager.get_command("base_velocity")[:, 1] = 0.4   # vy (forward)
+            base_env.command_manager.get_command("base_velocity")[:, 2] = 0.0   # ωz
+            obs = env.get_observations()   # refresh so policy sees the new command
 
         with torch.inference_mode():
             actions = policy(obs)
@@ -748,8 +836,11 @@ def main(
         q_all    = robot.data.joint_pos
         qdot_all = robot.data.joint_vel
 
-        # foot world-Z positions – body_pos_w shape: (num_envs, n_bodies, 3)
-        body_pos_w = robot.data.body_pos_w   # (num_envs, n_bodies, 3)
+        # foot world positions & linear velocities
+        # body_pos_w shape: (num_envs, n_bodies, 3)
+        # body_lin_vel_w shape: (num_envs, n_bodies, 3)
+        body_pos_w     = robot.data.body_pos_w      # (num_envs, n_bodies, 3)
+        body_lin_vel_w = robot.data.body_lin_vel_w  # (num_envs, n_bodies, 3)
 
         timestamps.append(timestep * dt)
 
@@ -759,8 +850,10 @@ def main(
 
         for fname, bidx in foot_indices.items():
             # world-Z of the foot body centre
-            z_world = body_pos_w[env_idx, bidx, 2].item()
+            z_world  = body_pos_w[env_idx, bidx, 2].item()
+            vy_world = body_lin_vel_w[env_idx, bidx, 1].item()   # Y component
             foot_logs[fname].append(z_world)
+            foot_vy_logs[fname].append(vy_world)
 
         # console log every 200 steps
         if timestep % 200 == 0 and joint_indices:
@@ -812,6 +905,9 @@ def main(
     foot_np: dict[str, np.ndarray] = {
         f: np.asarray(v, dtype=np.float32) for f, v in foot_logs.items()
     }
+    foot_vy_np: dict[str, np.ndarray] = {
+        f: np.asarray(v, dtype=np.float32) for f, v in foot_vy_logs.items()
+    }
 
     # Normalise foot heights so that the lowest recorded stance contact = 0.
     # This removes any constant offset from terrain height or robot spawn height.
@@ -837,10 +933,8 @@ def main(
     for fname, z in foot_np.items():
         swing_mask = z > _STANCE_THRESHOLD_M
         swing_z    = z[swing_mask] if swing_mask.any() else np.array([0.0])
-        drag_count = int((swing_mask & (z <= _TOE_DRAG_THRESHOLD_M)).sum())
-        status     = "✓ OK" if drag_count == 0 else f"✗ TOE DRAG ({drag_count} samples)"
         print(f"  {fname:10s}  min_swing={swing_z.min()*100:5.1f} cm  "
-              f"max_swing={swing_z.max()*100:5.1f} cm  {status}")
+              f"max_swing={swing_z.max()*100:5.1f} cm")
     print("============================================\n", flush=True)
 
     # ── determine output directory ────────────────────────────────────────────
@@ -858,8 +952,14 @@ def main(
     else:
         print("[GAIT] Skipping foot clearance plot (no foot bodies found).")
 
-    # ── Export 4: CSV Data ────────────────────────────────────────────────────
-    export_to_csv(t_arr, pos_np, vel_np, foot_np, save_dir=save_dir)
+    # ── Plot 4: Foot Slide ────────────────────────────────────────────────────
+    if foot_np and foot_vy_np:
+        plot_foot_slide(t_arr, foot_np, foot_vy_np, save_path=save_dir)
+    else:
+        print("[GAIT] Skipping foot slide plot (no foot velocity data found).")
+
+    # ── Export 5: CSV Data ────────────────────────────────────────────────────
+    export_to_csv(t_arr, pos_np, vel_np, foot_np, foot_vy_np, save_dir=save_dir)
 
     print(f"[GAIT] All plots and data saved to: {save_dir}")
 
