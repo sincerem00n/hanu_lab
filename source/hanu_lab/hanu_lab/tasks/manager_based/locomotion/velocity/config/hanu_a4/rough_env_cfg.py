@@ -19,6 +19,7 @@ from isaaclab.managers import TerminationTermCfg as DoneTerm
 from isaaclab.managers import EventTermCfg as EventTerm
 from isaaclab.managers import SceneEntityCfg
 from isaaclab.utils import configclass
+from isaaclab.utils.noise import AdditiveUniformNoiseCfg as Unoise
 
 import hanu_lab.tasks.manager_based.locomotion.velocity.mdp as mdp
 from hanu_lab.tasks.manager_based.locomotion.velocity.velocity_env_cfg import LocomotionVelocityRoughEnvCfg, RewardsCfg, TerminationsCfg, CommandsCfg, EventCfg
@@ -1067,14 +1068,24 @@ class HanuA4RoughEnvCfgV5(HanuA4RoughEnvCfg):
         # ==========================================================
         # Scale observations for stable learning
         # self.observations.policy.base_lin_vel.scale = 2.0
-        self.observations.policy.base_ang_vel.scale = 0.25
+        # self.observations.policy.base_ang_vel.scale = 0.25
         self.observations.policy.joint_pos.scale = 1.0
         self.observations.policy.joint_vel.scale = 0.05
+        self.observations.policy.imu_lin_acc.scale = 0.25
+        self.observations.policy.imu_ang_vel.scale = 0.25
 
         self.observations.policy.height_scan = None
         # self.observations.policy.gait_phase = None
         # self.observations.policy.target_q = None
+        self.observations.policy.base_ang_vel = None
+        self.observations.critic.base_ang_vel = None
         self.observations.policy.projected_gravity = None
+        self.observations.critic.projected_gravity = None
+        # self.observations.policy.projected_gravity.noise = Unoise(n_min=-0.05, n_max=0.05)
+        # self.observations.critic.projected_gravity.noise = Unoise(n_min=-0.05, n_max=0.05)
+
+        self.observations.policy.actions.history_length = 1
+        self.observations.critic.actions.history_length = 1
 
         # ==========================================================
         # ACTIONS CONFIGURATION

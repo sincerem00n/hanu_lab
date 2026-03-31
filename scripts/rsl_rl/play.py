@@ -281,6 +281,16 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
             except Exception as e:
                 print("[DBG] gravity read error:", e)
 
+            # 5) IMU sensor data
+            try:
+                imu = base_env.scene["imu_sensor"]
+                lin_acc = imu.data.lin_acc_b   # shape (num_envs, 3)  [ax, ay, az]
+                ang_vel = imu.data.ang_vel_b   # shape (num_envs, 3)  [wx, wy, wz]
+                print(f"[DBG] IMU lin_acc_b  env0: {[f'{v:.4f}' for v in lin_acc[0].tolist()]}")
+                print(f"[DBG] IMU ang_vel_b  env0: {[f'{v:.4f}' for v in ang_vel[0].tolist()]}")
+            except Exception as e:
+                print("[DBG] IMU read error:", e)
+
         timestep += 1
 
         # Exit the play loop after recording one video
