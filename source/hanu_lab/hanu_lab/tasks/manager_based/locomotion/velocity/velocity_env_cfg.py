@@ -72,7 +72,7 @@ class MySceneCfg(InteractiveSceneCfg):
         mesh_prim_paths=["/World/ground"],
     )
     contact_forces = ContactSensorCfg(prim_path="{ENV_REGEX_NS}/Robot/.*", history_length=3, track_air_time=True)
-    # imu_sensor = ImuCfg(prim_path="{ENV_REGEX_NS}/Robot/fixed_imu_1", debug_vis=True)
+    imu_sensor = ImuCfg(prim_path="{ENV_REGEX_NS}/Robot/base_link", debug_vis=True)
     # lights
     sky_light = AssetBaseCfg(
         prim_path="/World/skyLight",
@@ -135,16 +135,16 @@ class ObservationsCfg:
             clip=(-100.0, 100.0),
             scale=1.0,
         )
-        # imu_lin_acc = ObsTerm(
-        #     func=mdp.imu_lin_acc,
-        #     params={"asset_cfg": SceneEntityCfg("imu_sensor")},
-        #     noise=Unoise(n_min=-0.1, n_max=0.1),
-        # )
-        # imu_ang_vel = ObsTerm(
-        #     func=mdp.imu_ang_vel,
-        #     params={"asset_cfg": SceneEntityCfg("imu_sensor")},
-        #     noise=Unoise(n_min=-0.2, n_max=0.2),
-        # )
+        imu_lin_acc = ObsTerm(
+            func=mdp.imu_lin_acc,
+            params={"asset_cfg": SceneEntityCfg("imu_sensor")},
+            noise=Unoise(n_min=-0.1, n_max=0.1),
+        )
+        imu_ang_vel = ObsTerm(
+            func=mdp.imu_ang_vel,
+            params={"asset_cfg": SceneEntityCfg("imu_sensor")},
+            noise=Unoise(n_min=-0.2, n_max=0.2),
+        )
         projected_gravity = ObsTerm(
             func=mdp.projected_gravity,
             noise=Unoise(n_min=-0.05, n_max=0.05),
@@ -217,16 +217,16 @@ class ObservationsCfg:
             clip=(-100.0, 100.0),
             scale=1.0,
         )
-        # imu_lin_acc = ObsTerm(
-        #     func=mdp.imu_lin_acc,
-        #     params={"asset_cfg": SceneEntityCfg("imu_sensor")},
-        #     noise=Unoise(n_min=-0.1, n_max=0.1),
-        # )
-        # imu_ang_vel = ObsTerm(
-        #     func=mdp.imu_ang_vel,
-        #     params={"asset_cfg": SceneEntityCfg("imu_sensor")},
-        #     noise=Unoise(n_min=-0.2, n_max=0.2),
-        # )
+        imu_lin_acc = ObsTerm(
+            func=mdp.imu_lin_acc,
+            params={"asset_cfg": SceneEntityCfg("imu_sensor")},
+            noise=Unoise(n_min=-0.1, n_max=0.1),
+        )
+        imu_ang_vel = ObsTerm(
+            func=mdp.imu_ang_vel,
+            params={"asset_cfg": SceneEntityCfg("imu_sensor")},
+            noise=Unoise(n_min=-0.2, n_max=0.2),
+        )
         projected_gravity = ObsTerm(
             func=mdp.projected_gravity,
             clip=(-100.0, 100.0),
