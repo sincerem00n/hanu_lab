@@ -1049,7 +1049,7 @@ class HanuA4RoughEnvCfgV4(HanuA4RoughEnvCfg):
 
 @configclass
 class HanuA4RoughEnvCfgV5(HanuA4RoughEnvCfg):
-    """Configuration for the rough environment in the RAI Hanumanoid project. -- Imu Sensor"""
+    """Configuration for the rough environment in the RAI Hanumanoid project. -- target q + Imu"""
 
     def __post_init__(self):
         super().__post_init__()

@@ -6,7 +6,7 @@
 from isaaclab.managers import SceneEntityCfg
 from isaaclab.utils import configclass
 
-from .rough_env_cfg import HanuA4RoughEnvCfgV0, HanuA4RoughEnvCfgV1, HanuA4RoughEnvCfgV2, HanuA4RoughEnvCfgV3, HanuA4RoughEnvCfgV4
+from .rough_env_cfg import HanuA4RoughEnvCfgV0, HanuA4RoughEnvCfgV1, HanuA4RoughEnvCfgV2, HanuA4RoughEnvCfgV3, HanuA4RoughEnvCfgV4, HanuA4RoughEnvCfgV5
 
 @configclass
 class HanuA4FlatEnvCfgV0(HanuA4RoughEnvCfgV0):
@@ -74,6 +74,22 @@ class HanuA4FlatEnvCfgV3(HanuA4RoughEnvCfgV3):
 @configclass
 class HanuA4FlatEnvCfgV4(HanuA4RoughEnvCfgV4):
     """Configuration for the flat environment in the RAI Hanumanoid project. -- New baseline"""
+    def __post_init__(self):
+        super().__post_init__()
+
+        self.scene.terrain.terrain_type = "plane"
+        self.scene.terrain.terrain_generator = None
+
+        self.scene.height_scanner = None
+        self.observations.policy.height_scan = None
+        self.observations.critic.height_scan = None
+
+        self.curriculum.terrain_levels = None
+
+
+@configclass
+class HanuA4FlatEnvCfgV5(HanuA4RoughEnvCfgV5):
+    """Configuration for the flat environment in the RAI Hanumanoid project. -- target q + Imu"""
     def __post_init__(self):
         super().__post_init__()
 
