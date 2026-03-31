@@ -39,3 +39,4 @@ class HanuA4FlatEnvCfgV1(HanuA4RoughEnvCfgV1):
         self.observations.critic.height_scan = None
 
         self.curriculum.terrain_levels = None
+

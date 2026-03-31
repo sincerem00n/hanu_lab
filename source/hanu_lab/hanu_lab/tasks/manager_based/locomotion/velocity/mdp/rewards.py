@@ -357,3 +357,376 @@ def arms_lateral_open_pose(
         reward = reward * moving.float()
 
     return reward
+
+# ======================== Reference Motion Tracking ======================================
+
+
+def joint_pos_tracking_exp(
+    env: ManagerBasedRLEnv,
+    std: float = 0.25,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+    joint_weights: list[float] | None = None,
+) -> torch.Tensor:
+    """Reward joint position tracking of a reference motion using an exponential kernel.
+
+    The reward is computed as ``exp(-error / std^2)`` where ``error`` is the
+    (optionally weighted) mean-squared error between the current joint positions
+    and the reference joint positions.
+
+    The reference positions are obtained from ``env.ref_motion.get_joint_positions(env)``
+    if a reference motion manager is attached to the environment.  If no such
+    manager exists the robot's default joint positions are used as the reference,
+    which effectively encourages the robot to stay in its rest pose.
+
+    Args:
+        env: The RL environment.
+        std: Standard deviation that controls the width of the exponential kernel.
+             Smaller values make the reward sharper (more sensitive to errors).
+        asset_cfg: Scene entity configuration for the robot articulation.
+        joint_weights: Optional per-joint weights applied to the squared error
+            before averaging.  Length must match the number of joints selected by
+            ``asset_cfg``.  ``None`` means all joints are weighted equally.
+
+    Returns:
+        Tensor of shape ``(num_envs,)`` with per-environment rewards in [0, 1].
+    """
+    asset: Articulation = env.scene[asset_cfg.name]
+
+    # Current joint positions (relative to default / zero pos depends on asset setup)
+    # joint_pos_rel already subtracts default_joint_pos, so use raw joint_pos here.
+    current_q = asset.data.joint_pos  # (N, num_joints)
+
+    # ── Reference joint positions ──────────────────────────────────────────────
+    if hasattr(env, "ref_motion") and env.ref_motion is not None:
+        # External reference motion manager must implement get_joint_positions(env)
+        # and return a tensor of shape (N, num_joints).
+        ref_q = env.ref_motion.get_joint_positions(env)
+    else:
+        # Fallback: use the robot's default joint positions as a static reference.
+        ref_q = asset.data.default_joint_pos  # (N, num_joints) or (1, num_joints)
+        if ref_q.shape[0] == 1:
+            ref_q = ref_q.expand(env.num_envs, -1)
+
+    # ── Subset of joints (if body_ids / joint_ids are configured) ─────────────
+    if asset_cfg.joint_ids is not None and asset_cfg.joint_ids != slice(None):
+        current_q = current_q[:, asset_cfg.joint_ids]
+        ref_q = ref_q[:, asset_cfg.joint_ids]
+
+    # ── Per-joint squared error ────────────────────────────────────────────────
+    sq_error = torch.square(current_q - ref_q)  # (N, num_joints)
+
+    if joint_weights is not None:
+        weights = torch.tensor(joint_weights, dtype=sq_error.dtype, device=env.device)
+        sq_error = sq_error * weights
+
+    # Mean squared error across joints
+    mse = torch.mean(sq_error, dim=1)  # (N,)
+
+    return torch.exp(-mse / std**2)
+
+
+def joint_pos_tracking_l2(
+    env: ManagerBasedRLEnv,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+    joint_weights: list[float] | None = None,
+) -> torch.Tensor:
+    """Penalize joint position deviation from a reference motion using L2 norm.
+
+    Unlike the exponential variant, this returns a *penalty* (negative values)
+    equal to the (optionally weighted) root-mean-square error between the current
+    and reference joint positions.  Pair it with a negative reward weight in the
+    config.
+
+    The reference positions are obtained from ``env.ref_motion.get_joint_positions(env)``
+    if available, otherwise the robot's default positions are used.
+
+    Args:
+        env: The RL environment.
+        asset_cfg: Scene entity configuration for the robot articulation.
+        joint_weights: Optional per-joint weights for the squared error.
+
+    Returns:
+        Tensor of shape ``(num_envs,)`` — RMSE penalty (non-negative).
+        Use a **negative** reward weight when registering this term.
+    """
+    asset: Articulation = env.scene[asset_cfg.name]
+
+    current_q = asset.data.joint_pos  # (N, num_joints)
+
+    if hasattr(env, "ref_motion") and env.ref_motion is not None:
+        ref_q = env.ref_motion.get_joint_positions(env)
+    else:
+        ref_q = asset.data.default_joint_pos
+        if ref_q.shape[0] == 1:
+            ref_q = ref_q.expand(env.num_envs, -1)
+
+    if asset_cfg.joint_ids is not None and asset_cfg.joint_ids != slice(None):
+        current_q = current_q[:, asset_cfg.joint_ids]
+        ref_q = ref_q[:, asset_cfg.joint_ids]
+
+    sq_error = torch.square(current_q - ref_q)  # (N, num_joints)
+
+    if joint_weights is not None:
+        weights = torch.tensor(joint_weights, dtype=sq_error.dtype, device=env.device)
+        sq_error = sq_error * weights
+
+    # RMSE across joints — always non-negative, use negative reward weight
+    return torch.sqrt(torch.mean(sq_error, dim=1))
+
+
+# ======================== Reference Velocity Tracking ======================================
+
+
+def joint_vel_tracking_exp(
+    env: ManagerBasedRLEnv,
+    std: float = 1.0,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+    joint_weights: list[float] | None = None,
+) -> torch.Tensor:
+    """Reward joint velocity tracking of a reference motion using an exponential kernel.
+
+    Matching joint velocities ensures the robot mimics the momentum and flow of the
+    reference motion — not just snapping to target positions but actually moving
+    through them at the right speed.
+
+    The reward is computed as ``exp(-MSE / std^2)`` where ``MSE`` is the
+    (optionally weighted) mean squared error between the current joint velocities
+    and the reference joint velocities.
+
+    The reference velocities are obtained from ``env.ref_motion.get_joint_velocities(env)``
+    if a reference motion manager is attached. If no such manager exists, zero velocities
+    are used as the reference (penalising unnecessary joint motion).
+
+    Args:
+        env: The RL environment.
+        std: Standard deviation controlling the kernel width. Velocity errors are
+             naturally larger in magnitude than position errors — values in the
+             range 0.5 – 2.0 rad/s are typical starting points.
+        asset_cfg: Scene entity configuration for the robot articulation.
+        joint_weights: Optional per-joint weights applied to the squared error
+            before averaging. ``None`` means uniform weighting.
+
+    Returns:
+        Tensor of shape ``(num_envs,)`` with per-environment rewards in [0, 1].
+    """
+    asset: Articulation = env.scene[asset_cfg.name]
+
+    current_dq = asset.data.joint_vel  # (N, num_joints)
+
+    # ── Reference joint velocities ─────────────────────────────────────────────
+    if hasattr(env, "ref_motion") and env.ref_motion is not None:
+        # Reference motion manager must implement get_joint_velocities(env)
+        # and return a tensor of shape (N, num_joints).
+        ref_dq = env.ref_motion.get_joint_velocities(env)
+    else:
+        # Fallback: reference velocity is zero (rest / no-motion reference).
+        ref_dq = torch.zeros_like(current_dq)
+
+    # ── Subset of joints ───────────────────────────────────────────────────────
+    if asset_cfg.joint_ids is not None and asset_cfg.joint_ids != slice(None):
+        current_dq = current_dq[:, asset_cfg.joint_ids]
+        ref_dq = ref_dq[:, asset_cfg.joint_ids]
+
+    # ── Per-joint squared error ────────────────────────────────────────────────
+    sq_error = torch.square(current_dq - ref_dq)  # (N, num_joints)
+
+    if joint_weights is not None:
+        weights = torch.tensor(joint_weights, dtype=sq_error.dtype, device=env.device)
+        sq_error = sq_error * weights
+
+    mse = torch.mean(sq_error, dim=1)  # (N,)
+
+    return torch.exp(-mse / std**2)
+
+
+def joint_vel_tracking_l2(
+    env: ManagerBasedRLEnv,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+    joint_weights: list[float] | None = None,
+) -> torch.Tensor:
+    """Penalize joint velocity deviation from a reference motion using L2 norm.
+
+    Returns a *penalty* (non-negative RMSE) between the current joint velocities
+    and the reference joint velocities.  Pair with a **negative** reward weight in
+    the config to penalise velocity mismatch.
+
+    The reference velocities are obtained from ``env.ref_motion.get_joint_velocities(env)``
+    if available, otherwise zero velocities are used.
+
+    Args:
+        env: The RL environment.
+        asset_cfg: Scene entity configuration for the robot articulation.
+        joint_weights: Optional per-joint weights for the squared error.
+
+    Returns:
+        Tensor of shape ``(num_envs,)`` — RMSE penalty (non-negative).
+        Use a **negative** reward weight when registering this term.
+    """
+    asset: Articulation = env.scene[asset_cfg.name]
+
+    current_dq = asset.data.joint_vel  # (N, num_joints)
+
+    if hasattr(env, "ref_motion") and env.ref_motion is not None:
+        ref_dq = env.ref_motion.get_joint_velocities(env)
+    else:
+        ref_dq = torch.zeros_like(current_dq)
+
+    if asset_cfg.joint_ids is not None and asset_cfg.joint_ids != slice(None):
+        current_dq = current_dq[:, asset_cfg.joint_ids]
+        ref_dq = ref_dq[:, asset_cfg.joint_ids]
+
+    sq_error = torch.square(current_dq - ref_dq)  # (N, num_joints)
+
+    if joint_weights is not None:
+        weights = torch.tensor(joint_weights, dtype=sq_error.dtype, device=env.device)\
+        
+        sq_error = sq_error * weights
+
+    # RMSE across joints — always non-negative, use negative reward weight
+    return torch.sqrt(torch.mean(sq_error, dim=1))
+
+
+# ======================== End-Effector (Foot) Cartesian Tracking ======================================
+
+
+def foot_pos_tracking_exp(
+    env: ManagerBasedRLEnv,
+    foot_cfg: SceneEntityCfg,
+    std: float = 0.05,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+) -> torch.Tensor:
+    """Reward foot Cartesian position tracking against a reference motion using an exponential kernel.
+
+    Even when joint angles are close, kinematic chain errors can accumulate so that
+    feet end up in the wrong position relative to the base, causing the robot to trip.
+    This reward directly penalises end-effector position error in the yaw-aligned base
+    frame, catching those cumulative FK errors that joint-space tracking alone misses.
+
+    The reward is ``exp(-MSE / std^2)`` where ``MSE`` is the mean squared Cartesian
+    distance (averaged over all tracked feet) between the current and reference foot
+    positions expressed in the **yaw-aligned base frame**.
+
+    Reference foot positions are resolved in priority order:
+      1. ``env.ref_motion.get_foot_positions_b(env)`` — positions already in base frame,
+         shape ``(N, num_feet, 3)``.
+      2. ``env.ref_motion.get_foot_positions_w(env)`` — world-frame positions,
+         shape ``(N, num_feet, 3)``; auto-transformed to the yaw-aligned base frame.
+      3. Fallback: the foot positions snapshotted at the start of each episode
+         (from ``env.extras["foot_pos_b_init"]``).  These are computed and cached
+         on the first call, giving a static "stand-still" reference.
+
+    Args:
+        env: The RL environment.
+        foot_cfg: ``SceneEntityCfg`` for the **robot** asset with ``body_names`` set
+            to the foot links (e.g. ``SceneEntityCfg("robot", body_names=".*foot.*")``).
+        std: Kernel width in metres. Typical values: 0.02–0.10 m.
+        asset_cfg: Scene entity config for the robot (used for root pose).
+
+    Returns:
+        Tensor of shape ``(num_envs,)`` with per-environment rewards in [0, 1].
+    """
+    asset: Articulation = env.scene[asset_cfg.name]
+
+    # ── Current foot positions in yaw-aligned base frame ──────────────────────
+    # body_pos_w : (N, num_bodies, 3)
+    foot_pos_w = asset.data.body_pos_w[:, foot_cfg.body_ids, :3]  # (N, F, 3)
+
+    root_pos_w = asset.data.root_pos_w[:, :3]               # (N, 3)
+    base_yaw_quat = yaw_quat(asset.data.root_quat_w)        # (N, 4)
+
+    # Relative foot positions in world frame, then rotate to base frame
+    N, F, _ = foot_pos_w.shape
+    rel_w = foot_pos_w - root_pos_w.unsqueeze(1)             # (N, F, 3)
+    rel_w_flat = rel_w.reshape(N * F, 3)
+    yaw_rep = base_yaw_quat.unsqueeze(1).expand(N, F, 4).reshape(N * F, 4)
+    foot_pos_b = quat_apply_inverse(yaw_rep, rel_w_flat).reshape(N, F, 3)  # (N, F, 3)
+
+    # ── Reference foot positions ───────────────────────────────────────────────
+    if hasattr(env, "ref_motion") and env.ref_motion is not None:
+        if hasattr(env.ref_motion, "get_foot_positions_b"):
+            # Already in base frame
+            ref_foot_b = env.ref_motion.get_foot_positions_b(env)            # (N, F, 3)
+        elif hasattr(env.ref_motion, "get_foot_positions_w"):
+            # World-frame → transform to yaw-aligned base frame
+            ref_w = env.ref_motion.get_foot_positions_w(env)                 # (N, F, 3)
+            ref_rel_w = ref_w - root_pos_w.unsqueeze(1)
+            ref_rel_flat = ref_rel_w.reshape(N * F, 3)
+            ref_foot_b = quat_apply_inverse(yaw_rep, ref_rel_flat).reshape(N, F, 3)
+        else:
+            ref_foot_b = foot_pos_b.detach()
+    else:
+        # Fallback: cache the initial foot positions at episode start
+        if not hasattr(env, "_foot_pos_b_init") or env._foot_pos_b_init is None:
+            env._foot_pos_b_init = foot_pos_b.detach().clone()
+        # When the environment resets, reset the cache for those envs
+        reset_mask = env.episode_length_buf == 1          # first step after reset
+        if reset_mask.any():
+            env._foot_pos_b_init[reset_mask] = foot_pos_b[reset_mask].detach()
+        ref_foot_b = env._foot_pos_b_init
+
+    # ── Squared Cartesian error per foot ──────────────────────────────────────
+    # (N, F, 3) → squared distance per foot → (N, F)
+    sq_dist = torch.sum(torch.square(foot_pos_b - ref_foot_b), dim=-1)
+
+    # Mean over all feet → (N,)
+    mse = torch.mean(sq_dist, dim=-1)
+
+    return torch.exp(-mse / std**2)
+
+
+def foot_pos_tracking_l2(
+    env: ManagerBasedRLEnv,
+    foot_cfg: SceneEntityCfg,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+) -> torch.Tensor:
+    """Penalise foot Cartesian position deviation from a reference motion using L2 norm.
+
+    Returns the mean Euclidean foot-position error (in metres) across all tracked feet,
+    expressed in the yaw-aligned base frame.  Pair with a **negative** reward weight.
+
+    Uses the same reference resolution logic as :func:`foot_pos_tracking_exp`.
+
+    Args:
+        env: The RL environment.
+        foot_cfg: ``SceneEntityCfg`` with ``body_names`` pointing to the foot links.
+        asset_cfg: Scene entity config for the robot.
+
+    Returns:
+        Tensor of shape ``(num_envs,)`` — mean foot position error in metres.
+        Use a **negative** reward weight when registering this term.
+    """
+    asset: Articulation = env.scene[asset_cfg.name]
+
+    foot_pos_w = asset.data.body_pos_w[:, foot_cfg.body_ids, :3]  # (N, F, 3)
+    root_pos_w = asset.data.root_pos_w[:, :3]
+    base_yaw_quat = yaw_quat(asset.data.root_quat_w)
+
+    N, F, _ = foot_pos_w.shape
+    rel_w = foot_pos_w - root_pos_w.unsqueeze(1)
+    rel_w_flat = rel_w.reshape(N * F, 3)
+    yaw_rep = base_yaw_quat.unsqueeze(1).expand(N, F, 4).reshape(N * F, 4)
+    foot_pos_b = quat_apply_inverse(yaw_rep, rel_w_flat).reshape(N, F, 3)
+
+    # ── Reference foot positions ───────────────────────────────────────────────
+    if hasattr(env, "ref_motion") and env.ref_motion is not None:
+        if hasattr(env.ref_motion, "get_foot_positions_b"):
+            ref_foot_b = env.ref_motion.get_foot_positions_b(env)
+        elif hasattr(env.ref_motion, "get_foot_positions_w"):
+            ref_w = env.ref_motion.get_foot_positions_w(env)
+            ref_rel_w = ref_w - root_pos_w.unsqueeze(1)
+            ref_rel_flat = ref_rel_w.reshape(N * F, 3)
+            ref_foot_b = quat_apply_inverse(yaw_rep, ref_rel_flat).reshape(N, F, 3)
+        else:
+            ref_foot_b = foot_pos_b.detach()
+    else:
+        if not hasattr(env, "_foot_pos_b_init") or env._foot_pos_b_init is None:
+            env._foot_pos_b_init = foot_pos_b.detach().clone()
+        reset_mask = env.episode_length_buf == 1
+        if reset_mask.any():
+            env._foot_pos_b_init[reset_mask] = foot_pos_b[reset_mask].detach()
+        ref_foot_b = env._foot_pos_b_init
+
+    # ── Mean Euclidean error across feet ──────────────────────────────────────
+    # (N, F, 3) → L2 per foot → (N, F) → mean → (N,)
+    dist = torch.norm(foot_pos_b - ref_foot_b, dim=-1)   # (N, F)
+    return torch.mean(dist, dim=-1)                        # (N,)

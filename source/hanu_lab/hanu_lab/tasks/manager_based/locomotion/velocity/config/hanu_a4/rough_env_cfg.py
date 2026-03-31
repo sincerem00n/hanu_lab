@@ -107,11 +107,25 @@ class HanuA4RewardsCfg(RewardsCfg):
                 joint_names=[
                     ".*_shoulder_.*",
                     ".*_elbow_.*",
-                    ".*_wrist_.*",
+                    # ".*_wrist_.*",
                 ],
             )
         },
     )
+
+    joint_deviation_legs = RewTerm(
+        func=mdp.joint_deviation_l1,
+        weight=-0.1,
+        params={
+            "asset_cfg": SceneEntityCfg(
+                "robot",
+                joint_names=[
+                    ".*_hip_yaw",
+                ],
+            )
+        },
+    )
+
 
     joint_vel_neck = RewTerm(
         func=mdp.joint_vel_l2,
@@ -133,6 +147,34 @@ class HanuA4RewardsCfg(RewardsCfg):
                 "robot",
                 joint_names=[
                     ".*_hip_yaw",
+                ],
+            )
+        },
+    )
+
+    joint_vel_abs = RewTerm(
+        func=mdp.joint_vel_l2,
+        weight=-0.5,
+        params={
+            "asset_cfg":SceneEntityCfg(
+            "robot",
+            joint_names=[
+                ".*_abdomen_.*",
+            ]
+            )
+        },
+    )
+
+    joint_vel_arms = RewTerm(
+        func=mdp.joint_vel_l2,
+        weight=-0.1,
+        params={
+            "asset_cfg":SceneEntityCfg(
+                "robot",
+                joint_names=[
+                    ".*_shoulder_.*",
+                    ".*_elbow_.*",
+                    # ".*_wrist_.*",
                 ],
             )
         },
@@ -168,49 +210,75 @@ class HanuA4RewardsCfg(RewardsCfg):
         
 
 
-    feet_air_time_penalty = RewTerm(
-        func=mdp.feet_air_time_negative_biped,
-        weight=-0.05,
-        params={
-            "sensor_cfg": SceneEntityCfg(
-                "contact_forces",
-                body_names=[".*_foot_.*"],
-            ),
-            "command_name": "base_velocity",
-            "threshold": 0.12,
-        },
-    )
+    #feet_air_time_penalty = RewTerm(
+    #    func=mdp.feet_air_time_negative_biped,
+    #    weight=-0.05,
+    #    params={
+    #        "sensor_cfg": SceneEntityCfg(
+    #            "contact_forces",
+    #            body_names=[".*_foot_.*"],
+    #        ),
+    #        "command_name": "base_velocity",
+    #        "threshold": 0.12,
+    #    },
+    #)
 
-    feet_lateral_sep_reward = RewTerm(
-        func=mdp.feet_lateral_separation_reward,
-        weight=0.2,
-        params={
-            "sensor_cfg": SceneEntityCfg(
-                "robot",
-                body_names=["l_foot_roll_1", "r_foot_roll_1"],  
-            ),
-            "command_name": "base_velocity",
-            "threshold": 0.13,
-            "margin": 0.03,
-        },
-    )
+    #feet_lateral_sep_reward = RewTerm(
+    #    func=mdp.feet_lateral_separation_reward,
+    #    weight=0.2,
+    #    params={
+    #        "sensor_cfg": SceneEntityCfg(
+    #            "robot",
+    #            body_names=[".*_calf_pitch_.*"],  
+    #        ),
+    #        "command_name": "base_velocity",
+    #        "threshold": 0.15,
+    #        "margin": 0.03,
+    #    },
+    #)
 
 
-    arms_away_from_body = RewTerm(
-        func=mdp.arms_lateral_open_pose,
-        weight=0.35,
-        params={
-            "arm_sensor_cfg": SceneEntityCfg(
-                "robot",
-                body_names=["l_wrist_pitch_1", "r_wrist_pitch_1"]
-            ),
-            "min_lateral_dist": 0.22,
-            "max_backward_dist": 0.06,
-            "lateral_margin": 0.05,
-            "backward_margin": 0.05,
-            "command_name": "base_velocity",
-        },
-    )
+    #arms_away_from_body = RewTerm(
+    #    func=mdp.arms_lateral_open_pose,
+    #    weight=0.35,
+    #    params={
+    #        "arm_sensor_cfg": SceneEntityCfg(
+    #            "robot",
+    #            body_names=[".*_lowerarm_.*"]
+    #        ),
+    #        "min_lateral_dist": 0.22,
+    #        "max_backward_dist": 0.10,
+    #        "lateral_margin": 0.05,
+    #        "backward_margin": 0.05,
+    #        "command_name": "base_velocity",
+    #    },
+    #)
+    
+    # ============= NO CONTACT SENSOR ==============
+
+    #ref_joint_pos = RewTerm(
+    #    func=mdp.joint_pos_tracking_exp,
+    #    weight=2.0,
+    #    params={"std": 0.2},
+    #)
+    #ref_joint_vel = RewTerm(
+    #    func=mdp.joint_vel_tracking_exp,
+    #   weight=0.1,
+    #    params={"std": 1.5},
+    #)
+
+    #foot_pos_tracking = RewTerm(
+    #    func=mdp.foot_pos_tracking_exp,
+    #    weight=1.0,
+    #    params={
+    #        "foot_cfg": SceneEntityCfg(
+    #            "robot", 
+    #            body_names=".*_foot_.*",
+    #            ),
+    #        "std": 0.05,
+    #    },
+    #)
+
 
 @configclass
 class HanuA4TerminationsCfg(TerminationsCfg):
@@ -387,8 +455,8 @@ class HanuA4RoughEnvCfgV0(HanuA4RoughEnvCfg):
         # OBSERVATIONS CONFIGURATION
         # ==========================================================
         # Scale observations for stable learning
-        self.observations.policy.base_lin_vel.scale = 2.0
-        self.observations.policy.base_ang_vel.scale = 0.25
+        # self.observations.policy.base_lin_vel.scale = 2.0
+        self.observations.policy.base_ang_vel.scale = 2.0
         self.observations.policy.joint_pos.scale = 1.0
         self.observations.policy.joint_vel.scale = 0.05
 
@@ -427,7 +495,7 @@ class HanuA4RoughEnvCfgV0(HanuA4RoughEnvCfg):
         # COMMANDS CONFIGURATION
         # ==========================================================
         self.commands.base_velocity.ranges.lin_vel_x = (0.0, 0.0)
-        self.commands.base_velocity.ranges.lin_vel_y = (0.0, 1.0)  # (-1.0, 0.0)
+        self.commands.base_velocity.ranges.lin_vel_y = (0.2, 0.5)  # (-1.0, 0.0)
         self.commands.base_velocity.ranges.ang_vel_z = (0.0, 0.0)
 
         self.commands.base_velocity.rel_standing_envs = 0.02
@@ -435,34 +503,49 @@ class HanuA4RoughEnvCfgV0(HanuA4RoughEnvCfg):
         # ==========================================================
         # REWARDS CONFIGURATION
         # ==========================================================
-        self.rewards.track_lin_vel_xy_exp.weight = 2.2
-        self.rewards.track_ang_vel_z_exp.weight = 1.2
-        self.rewards.upright_orientation.weight = 4.0
-        self.rewards.lin_vel_z_l2.weight = -1.5
+        self.rewards.track_lin_vel_xy_exp.weight = 2.0
+        self.rewards.track_ang_vel_z_exp.weight = 0.5
+        self.rewards.flat_orientation_l2 = None
+        self.rewards.upright_orientation.weight = 2.0
+        self.rewards.lin_vel_z_l2.weight = -0.5
         self.rewards.ang_vel_xy_l2.weight = -0.3
 
-        self.rewards.feet_air_time.weight = 0.10
-        self.rewards.feet_air_time.params["threshold"] = 0.22
+        # ------------------------------------------
+        # self.rewards.feet_air_time.weight = 0.5
+        # self.rewards.feet_air_time.params["threshold"] = 0.4
 
-        self.rewards.feet_air_time_penalty.weight = -0.01
-        self.rewards.feet_air_time_penalty.params["threshold"] = 0.22
+        # self.rewards.feet_air_time_penalty.weight = -0.01
+        # self.rewards.feet_air_time_penalty.params["threshold"] = 0.38
+        # ------------------------------------------
+        self.rewards.feet_air_time = None
+        self.rewards.feet_air_time_penalty = None
 
-        self.rewards.feet_lateral_sep_reward.weight = None
 
-        self.rewards.feet_slide.weight = -0.4
-        self.rewards.feet_mirror.weight = -0.02
+        self.rewards.feet_lateral_sep_reward = None
+        self.rewards.arms_away_from_body = None
+        # self.rewards.feet_lateral_sep_reward.weight = 0.15
+        # self.rewards.arms_away_from_body.weight = 0.30
+        # self.rewards.arms_away_from_body.params["min_lateral_dist"] = 0.20
 
-        self.rewards.action_rate_l2.weight = -0.01
-        self.rewards.joint_vel_legs.weight = -0.12
+        self.rewards.feet_slide = None
+        self.rewards.feet_mirror = None
+        # self.rewards.feet_mirror.weight = -0.02
+
+        self.rewards.action_rate_l2.weight = -0.005
+        # self.rewards.dof_acc_l2 = None
+        self.rewards.dof_torques_l2.weight = -5.0e-7
+        self.rewards.joint_vel_legs.weight = -0.2
         self.rewards.joint_vel_neck.weight = -0.25
+        self.rewards.joint_vel_arms = None
 
         self.rewards.ankle_dof_pos_limits.weight = -0.2
         # self.rewards.knee_pose_deviation.weight = -0.0
         # self.rewards.knee_dof_pos_limits.weight = -0.0
-        self.rewards.joint_deviation_arms.weight = -0.05
-        self.rewards.joint_deviation_neck.weight = -0.05
+        self.rewards.joint_deviation_arms.weight = -0.2
+        self.rewards.joint_deviation_neck.weight = -0.1
+        self.rewards.joint_deviation_legs.weight = -0.3
 
-        self.rewards.feet_step_sequence.weight = None
+        self.rewards.feet_step_sequence = None
 
         # --- Termination penalty ---
         self.rewards.termination_penalty.weight = -200.0
@@ -534,8 +617,8 @@ class HanuA4RoughEnvCfgV1(HanuA4RoughEnvCfg):
 
         # ---- Added gait rewards only ----
         #self.rewards.feet_step_sequence.weight = 0.4
-        self.rewards.feet_air_time_penalty.weight = -0.05
-        self.rewards.feet_air_time_penalty.params["threshold"] = 0.24
+        #self.rewards.feet_air_time_penalty.weight = -0.05
+        #self.rewards.feet_air_time_penalty.params["threshold"] = 0.24
 
         # ------ Commands configuration --------
         self.commands.base_velocity.ranges.lin_vel_y = (-1.0, 1.0) # (-1.0, 0.0)
@@ -545,7 +628,7 @@ class HanuA4RoughEnvCfgV1(HanuA4RoughEnvCfg):
         self.rewards.feet_step_sequence.weight = 0.25   
         self.rewards.feet_mirror.weight = -0.05
 
-        self.rewards.arms_away_from_body.weight = 0.35
+        #self.rewards.arms_away_from_body = 0.0
         
         # ------ Terminations configuration --------
         # self.terminations.base_contact.params["sensor_cfg"].body_names = "base_.*"
