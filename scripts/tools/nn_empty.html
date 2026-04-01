@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RL Neural Network — Empty Slot Training Visualizer</title>
+    <meta name="description"
+        content="Interactive neural network simulation showing how an RL policy learns to ignore empty input slots during training.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg: #f0f4f8;
+            --surface: #ffffff;
+            --surface2: #e8edf3;
+            --border: rgba(0, 0, 0, 0.09);
+            --text: #1e293b;
+            --muted: #64748b;
+            --accent: #4f46e5;
+            --accent2: #7c3aed;
+            --green: #059669;
+            --red: #dc2626;
+            --orange: #d97706;
+            --cyan: #0891b2;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 32px 20px;
+        }
+
+        /* ─── Header ─── */
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent), var(--cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: var(--muted);
+            font-size: 0.95rem;
+            max-width: 540px;
+            margin: 0 auto 16px;
+            line-height: 1.6;
+        }
+
+        .step-badge {
+            display: inline-block;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 6px 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--cyan);
+            letter-spacing: 0.02em;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+        }
+
+        /* ─── Layout Grid ─── */
+        .grid-2col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            max-width: 1100px;
+            margin: 0 auto 20px;
+        }
+
+        .full-width {
+            max-width: 1100px;
+            margin: 0 auto 20px;
+        }
+
+        /* ─── Cards ─── */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .card-title {
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--muted);
+            margin-bottom: 14px;
+        }
+
+        /* ─── Metrics row ─── */
+        .metrics-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+            max-width: 1100px;
+            margin: 0 auto 20px;
+        }
+
+        .metric-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+        }
+
+        .metric-label {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
+        .metric-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .metric-value.green {
+            color: var(--green);
+        }
+
+        .metric-value.red {
+            color: var(--red);
+        }
+
+        .metric-value.orange {
+            color: var(--orange);
+        }
+
+        .metric-value.cyan {
+            color: var(--cyan);
+        }
+
+        /* ─── NN SVG Canvas ─── */
+        .nn-canvas {
+            width: 100%;
+            height: 340px;
+            background: #f8faff;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: visible;
+        }
+
+        /* ─── Chart ─── */
+        .chart-wrap {
+            position: relative;
+            height: 220px;
+        }
+
+        /* ─── Weight Matrix ─── */
+        .w-grid {
+            display: grid;
+            gap: 4px;
+        }
+
+        .w-cell {
+            border-radius: 4px;
+            height: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            font-weight: 500;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        /* ─── Controls ─── */
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 14px;
+            max-width: 1100px;
+            margin: 0 auto 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 28px;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s, opacity 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .btn-run {
+            background: linear-gradient(135deg, #059669, #047857);
+            color: #fff;
+        }
+
+        .btn-step {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            color: #fff;
+        }
+
+        .btn-pause {
+            background: linear-gradient(135deg, var(--orange), #b45309);
+            color: #fff;
+        }
+
+        .btn-reset {
+            background: var(--surface2);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-spike {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            color: #fff;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-spike.active {
+            background: linear-gradient(135deg, #b91c1c, #7f1d1d);
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.35);
+            animation: spike-btn-pulse 0.6s infinite alternate;
+        }
+
+        @keyframes spike-btn-pulse {
+            from {
+                box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.3);
+            }
+
+            to {
+                box-shadow: 0 0 0 6px rgba(220, 38, 38, 0.0);
+            }
+        }
+
+        /* ─── Spike status bar ─── */
+        .spike-bar {
+            max-width: 1100px;
+            margin: 0 auto 20px;
+            background: #fff1f2;
+            border: 1.5px solid #fca5a5;
+            border-radius: 12px;
+            padding: 14px 20px;
+            display: none;
+            align-items: center;
+            gap: 14px;
+            box-shadow: 0 2px 8px rgba(220, 38, 38, 0.1);
+        }
+
+        .spike-bar.visible {
+            display: flex;
+        }
+
+        .spike-icon {
+            font-size: 1.4rem;
+            flex-shrink: 0;
+        }
+
+        .spike-bar-text {
+            flex: 1;
+            font-size: 0.88rem;
+            color: #7f1d1d;
+            line-height: 1.5;
+        }
+
+        .spike-bar-text strong {
+            color: #dc2626;
+        }
+
+        .spike-progress-wrap {
+            width: 120px;
+            flex-shrink: 0;
+        }
+
+        .spike-progress-label {
+            font-size: 0.72rem;
+            color: #b91c1c;
+            margin-bottom: 3px;
+            text-align: right;
+        }
+
+        .spike-progress-bar {
+            height: 6px;
+            background: #fecaca;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .spike-progress-fill {
+            height: 100%;
+            background: #dc2626;
+            border-radius: 3px;
+            transition: width 0.1s;
+        }
+
+        /* SVG pulse animation class injected via JS */
+        @keyframes node-spike-pulse {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.4;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        /* ─── Speed slider ─── */
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 18px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+        }
+
+        .speed-control label {
+            font-size: 0.82rem;
+            color: var(--muted);
+            white-space: nowrap;
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100px;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--surface2);
+            outline: none;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+        }
+
+        /* ─── Legend ─── */
+        .legend {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.78rem;
+            color: var(--muted);
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        /* ─── Explanation box ─── */
+        .explain {
+            background: var(--surface2);
+            border-left: 3px solid var(--accent);
+            border-radius: 0 8px 8px 0;
+            padding: 12px 16px;
+            font-size: 0.82rem;
+            line-height: 1.6;
+            color: var(--muted);
+            margin-top: 12px;
+        }
+
+        .explain strong {
+            color: var(--text);
+        }
+
+        @media (max-width: 700px) {
+            .grid-2col {
+                grid-template-columns: 1fr;
+            }
+
+            .metrics-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <h1>Neural Network — Empty Slot Training</h1>
+        <p>Watch a real neural network learn in real time. The <strong style="color:var(--red)">empty input
+                slot</strong> (constant zeros) competes with <strong style="color:var(--green)">relevant inputs</strong>
+            for weight influence. Backpropagation gradually prunes it away.</p>
+        <div class="step-badge" id="stepCounter">Step: 0 / 500</div>
+    </div>
+
+    <!-- Metrics Row -->
+    <div class="metrics-row" style="grid-template-columns: repeat(5,1fr)">
+        <div class="metric-card">
+            <div class="metric-label">Training Loss</div>
+            <div class="metric-value red" id="mLoss">—</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Empty-Slot Influence</div>
+            <div class="metric-value orange" id="mEmpty">—</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Relevant Input Strength</div>
+            <div class="metric-value green" id="mRelevant">—</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Signal / Noise Ratio</div>
+            <div class="metric-value cyan" id="mSNR">—</div>
+        </div>
+        <div class="metric-card" id="spikeMetricCard" style="border:1.5px solid #fca5a5;background:#fff1f2">
+            <div class="metric-label" style="color:#b91c1c">⚡ Spike Output Δ</div>
+            <div class="metric-value red" id="mSpikeDelta">—</div>
+        </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+        <button class="btn btn-run" id="btnRun">▶ Run (500 steps)</button>
+        <button class="btn btn-step" id="btnStep">⏭ Step ×10</button>
+        <button class="btn btn-pause" id="btnPause" disabled>⏸ Pause</button>
+        <button class="btn btn-reset" id="btnReset">↩ Reset</button>
+        <button class="btn btn-spike" id="btnSpike">⚡ Inject Spike</button>
+        <div class="speed-control">
+            <label>Speed</label>
+            <input type="range" id="speedSlider" min="10" max="200" value="80">
+            <span id="speedLabel"
+                style="font-size:0.8rem;color:var(--text);font-family:'JetBrains Mono',monospace;min-width:40px">80ms</span>
+        </div>
+    </div>
+
+    <!-- Spike status bar -->
+    <div class="spike-bar" id="spikeBar">
+        <div class="spike-icon">⚡</div>
+        <div class="spike-bar-text">
+            <strong>Empty slot spiked!</strong> x₁ is now <strong id="spikeValDisplay">1.5</strong> instead of 0.
+            Watch how output changes — early in training the network is <strong>fooled</strong>; later it ignores the
+            noise.
+        </div>
+        <div class="spike-progress-wrap">
+            <div class="spike-progress-label"><span id="spikeCountdown">40</span> steps left</div>
+            <div class="spike-progress-bar">
+                <div class="spike-progress-fill" id="spikeProgressFill" style="width:100%"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main network + charts -->
+    <div class="full-width card">
+        <div class="card-title">Neural Network — Live Weight Visualization</div>
+        <svg id="networkSvg" class="nn-canvas" viewBox="0 0 700 300"></svg>
+        <div class="explain">
+            <strong>Edge thickness & color</strong> = |weight| magnitude.
+            <span style="color:var(--red)">Red edges</span> = connections from the empty slot (input 1, always 0).
+            <span style="color:var(--green)">Green edges</span> = connections from relevant inputs.
+            As training progresses, backprop drives the empty-slot weights toward zero.
+        </div>
+    </div>
+
+    <div class="grid-2col">
+        <!-- Loss chart -->
+        <div class="card">
+            <div class="card-title">Training Loss (MSE)</div>
+            <div class="chart-wrap">
+                <canvas id="lossChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Weight influence chart -->
+        <div class="card">
+            <div class="card-title">Weight Influence Over Training</div>
+            <div class="chart-wrap">
+                <canvas id="influenceChart"></canvas>
+            </div>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-dot" style="background:var(--red)"></div>Empty-slot |W1| sum
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background:var(--green)"></div>Relevant |W1| sum
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background:#f97316;border:2px dashed #ea580c"></div>Spike output Δ
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Weight matrices -->
+    <div class="grid-2col">
+        <div class="card">
+            <div class="card-title">W1 — Input → Hidden (3×3)</div>
+            <div id="w1grid" class="w-grid" style="grid-template-columns: repeat(3, 1fr)"></div>
+            <div class="explain" style="margin-top:10px">
+                <strong>Column 1 (middle)</strong> = weights from the empty slot.
+                These should approach <strong>zero</strong> as training converges.
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-title">W2 — Hidden → Output (2×3)</div>
+            <div id="w2grid" class="w-grid" style="grid-template-columns: repeat(3, 1fr)"></div>
+        </div>
+    </div>
+
+    <script>
+        // ═══════════════════════════════════════════════════════════
+        //  NEURAL NETWORK  (3 → 3 → 2)
+        //  Input: [x0, x1_EMPTY, x2]   x1 is always 0 (dead slot)
+        //  Target: [x0+x2, x0-x2]  (depends only on x0, x2)
+        // ═══════════════════════════════════════════════════════════
+
+        const LR = 0.015;
+        const MAX_STEPS = 500;
+        const SPIKE_DURATION = 40;   // steps the spike lasts
+        const SPIKE_VAL = 1.5;        // injected x₁ value
+
+        function randn() { return (Math.random() * 2 - 1) * 0.8; }
+
+        let W1, W2, currentStep, trainingInterval;
+        let spikeStepsLeft = 0;       // countdown
+        let spikeDeltaData = [];      // chart data
+        let spikeEventMarkers = [];   // {step} where spikes started
+
+        function initWeights() {
+            W1 = Array.from({ length: 3 }, () => [randn(), randn(), randn()]);
+            W2 = Array.from({ length: 2 }, () => [randn(), randn(), randn()]);
+        }
+
+        function relu(x) { return Math.max(0, x); }
+        function reluD(x) { return x > 0 ? 1 : 0; }
+
+        function forward(x) {
+            const h_raw = W1.map(row => row[0] * x[0] + row[1] * x[1] + row[2] * x[2]);
+            const h = h_raw.map(relu);
+            const out = W2.map(row => row[0] * h[0] + row[1] * h[1] + row[2] * h[2]);
+            return { h_raw, h, out };
+        }
+
+        function getTarget(x) {
+            return [x[0] + x[2], x[0] - x[2]];
+        }
+
+        function trainStep(x1Override = 0) {
+            const x = [Math.random() * 2 - 1, x1Override, Math.random() * 2 - 1];
+            const target = getTarget(x);
+            const { h_raw, h, out } = forward(x);
+
+            // MSE loss
+            let loss = out.reduce((s, o, i) => s + (o - target[i]) ** 2, 0) / 2;
+
+            // ── Backprop ──
+            const dOut = out.map((o, i) => o - target[i]);                        // dL/dOut
+            const dW2 = W2.map((_, i) => h.map(hj => dOut[i] * hj));            // dL/dW2
+            const dH = h.map((_, j) => W2.reduce((s, row, i) => s + dOut[i] * row[j], 0));
+            const dH_raw = dH.map((v, i) => v * reluD(h_raw[i]));                // through ReLU
+            const dW1 = W1.map((_, i) => x.map(xj => dH_raw[i] * xj));         // dL/dW1
+
+            // ── Update ──
+            W2.forEach((row, i) => row.forEach((_, j) => { W2[i][j] -= LR * dW2[i][j]; }));
+            W1.forEach((row, i) => row.forEach((_, j) => { W1[i][j] -= LR * dW1[i][j]; }));
+
+            return { loss, x, h };
+        }
+
+        // Compute how much a spike on x₁ shifts outputs vs x₁=0 baseline
+        function computeSpikeImpact() {
+            // Use a fixed probe input so we isolate the empty-slot effect
+            const x_base = [0.5, 0, 0.5];
+            const x_spike = [0.5, SPIKE_VAL, 0.5];
+            const { out: o_base } = forward(x_base);
+            const { out: o_spike } = forward(x_spike);
+            // L2 distance of output shift
+            return Math.sqrt(o_base.reduce((s, _, i) => s + (o_spike[i] - o_base[i]) ** 2, 0));
+        }
+
+        function emptyInfluence() { return W1.reduce((s, r) => s + Math.abs(r[1]), 0); }
+        function relevantInfluence() { return W1.reduce((s, r) => s + Math.abs(r[0]) + Math.abs(r[2]), 0); }
+
+        // ═══════════════════════════════════════════════════════════
+        //  SVG NETWORK DRAWING
+        // ═══════════════════════════════════════════════════════════
+
+        const SVG_NS = "http://www.w3.org/2000/svg";
+        const svg = document.getElementById('networkSvg');
+
+        // Layer x-positions and node y-positions
+        const LAYERS = [
+            { x: 100, nodes: [60, 150, 240], labels: ['Input x₀', 'Empty x₁ = 0', 'Input x₂'], isInput: true },
+            { x: 350, nodes: [70, 150, 230], labels: ['H₀', 'H₁', 'H₂'], isInput: false },
+            { x: 590, nodes: [100, 200], labels: ['Act₀', 'Act₁'], isInput: false },
+        ];
+
+        const NODE_R = 18;
+        let edgeEls = [];  // flat list of {el, fromL, fromN, toL, toN}
+        let nodeEls = [];  // {el, circle, text}
+
+        function makeSvgEl(tag, attrs) {
+            const el = document.createElementNS(SVG_NS, tag);
+            for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+            return el;
+        }
+
+        function buildNetwork() {
+            svg.innerHTML = '';
+
+            // defs: subtle drop shadow filter (works on light bg)
+            const defs = makeSvgEl('defs', {});
+            const filter = makeSvgEl('filter', { id: 'glow', x: '-50%', y: '-50%', width: '200%', height: '200%' });
+            const fe1 = makeSvgEl('feDropShadow', { dx: '0', dy: '1', stdDeviation: '2', 'flood-color': 'rgba(0,0,0,0.18)' });
+            filter.append(fe1);
+            defs.append(filter);
+            svg.append(defs);
+
+            const edgeGroup = makeSvgEl('g', { id: 'edgeGroup' });
+            const nodeGroup = makeSvgEl('g', { id: 'nodeGroup' });
+            svg.append(edgeGroup, nodeGroup);
+
+            edgeEls = [];
+            nodeEls = [];
+
+            // Edges (W1: layer0→1, W2: layer1→2)
+            const layerPairs = [[0, 1], [1, 2]];
+            for (const [li, lo] of layerPairs) {
+                const fromLayer = LAYERS[li], toLayer = LAYERS[lo];
+                for (let fi = 0; fi < fromLayer.nodes.length; fi++) {
+                    for (let ti = 0; ti < toLayer.nodes.length; ti++) {
+                        const x1 = fromLayer.x + NODE_R, y1 = fromLayer.nodes[fi];
+                        const x2 = toLayer.x - NODE_R, y2 = toLayer.nodes[ti];
+                        const line = makeSvgEl('line', {
+                            x1, y1, x2, y2,
+                            stroke: '#cbd5e1',
+                            'stroke-width': '1.5',
+                            'stroke-opacity': '0.8',
+                            'stroke-linecap': 'round',
+                        });
+                        edgeGroup.appendChild(line);
+                        edgeEls.push({ el: line, fromL: li, fromN: fi, toL: lo, toN: ti });
+                    }
+                }
+            }
+
+            // Nodes
+            for (let li = 0; li < LAYERS.length; li++) {
+                const layer = LAYERS[li];
+                for (let ni = 0; ni < layer.nodes.length; ni++) {
+                    const y = layer.nodes[ni];
+                    const isEmpty = (li === 0 && ni === 1);
+
+                    const circle = makeSvgEl('circle', {
+                        cx: layer.x, cy: y, r: NODE_R,
+                        fill: isEmpty ? '#fee2e2' : '#dbeafe',
+                        stroke: isEmpty ? '#dc2626' : '#3b82f6',
+                        'stroke-width': '2.5',
+                        filter: 'url(#glow)',
+                    });
+
+                    // label (above)
+                    const labelY = ni === 0 ? y - NODE_R - 6 : (ni === layer.nodes.length - 1 ? y + NODE_R + 16 : y - NODE_R - 6);
+                    const textEl = makeSvgEl('text', {
+                        x: layer.x, y: labelY,
+                        fill: isEmpty ? '#dc2626' : '#475569',
+                        'text-anchor': 'middle',
+                        'font-size': '11',
+                        'font-family': 'Inter, sans-serif',
+                        'font-weight': isEmpty ? '700' : '400',
+                    });
+                    textEl.textContent = layer.labels[ni];
+
+                    // value badge inside node
+                    const valText = makeSvgEl('text', {
+                        x: layer.x, y: y + 4,
+                        fill: '#e2e8f0',
+                        'text-anchor': 'middle',
+                        'font-size': '9',
+                        'font-family': 'JetBrains Mono, monospace',
+                        'font-weight': '500',
+                    });
+                    valText.textContent = '0.00';
+                    valText.setAttribute('fill', '#1e293b');
+
+                    nodeGroup.append(circle, textEl, valText);
+                    nodeEls.push({ circle, valText, isEmpty, li, ni });
+                }
+            }
+        }
+
+        function lerp(a, b, t) { return a + (b - a) * t; }
+
+        function weightColor(w, isEmpty) {
+            const mag = Math.min(Math.abs(w), 3) / 3;  // 0..1
+            if (isEmpty) {
+                // red: light pink → vivid red
+                const r = Math.round(lerp(252, 220, mag));
+                const g = Math.round(lerp(220, 38, mag));
+                const b = Math.round(lerp(220, 38, mag));
+                return `rgb(${r},${g},${b})`;
+            } else {
+                if (w >= 0) {
+                    // green: light mint → vivid emerald
+                    const r = Math.round(lerp(220, 5, mag));
+                    const g = Math.round(lerp(250, 150, mag));
+                    const bv = Math.round(lerp(220, 105, mag));
+                    return `rgb(${r},${g},${bv})`;
+                } else {
+                    // blue/indigo: light → vivid
+                    const r = Math.round(lerp(220, 79, mag));
+                    const g = Math.round(lerp(230, 70, mag));
+                    const bv = Math.round(lerp(255, 229, mag));
+                    return `rgb(${r},${g},${bv})`;
+                }
+            }
+        }
+
+        function updateNetwork(lastX, lastH, lastOut) {
+            // ── Update edges ──
+            for (const e of edgeEls) {
+                let w, isEmpty;
+                if (e.fromL === 0) {
+                    // W1[toN][fromN]
+                    w = W1[e.toN][e.fromN];
+                    isEmpty = (e.fromN === 1);  // middle input = empty slot
+                } else {
+                    // W2[toN][fromN]
+                    w = W2[e.toN][e.fromN];
+                    isEmpty = false;
+                }
+                const mag = Math.min(Math.abs(w), 3) / 3;
+                const col = weightColor(w, isEmpty);
+                e.el.setAttribute('stroke', col);
+                e.el.setAttribute('stroke-width', (1 + mag * 5).toFixed(2));
+                e.el.setAttribute('stroke-opacity', (0.2 + mag * 0.8).toFixed(3));
+            }
+
+            // ── Update node values ──
+            const allActivations = [
+                lastX || [0, 0, 0],
+                lastH || [0, 0, 0],
+                lastOut || [0, 0],
+            ];
+            nodeEls.forEach(({ circle, valText, isEmpty, li, ni }) => {
+                const val = allActivations[li]?.[ni] ?? 0;
+                valText.textContent = val.toFixed(2);
+                if (!isEmpty) {
+                    const mag = Math.min(Math.abs(val), 2) / 2;
+                    const r = Math.round(lerp(219, 147, mag));
+                    const g = Math.round(lerp(234, 197, mag));
+                    const b = Math.round(lerp(254, 253, mag));
+                    circle.setAttribute('fill', `rgb(${r},${g},${b})`);
+                }
+            });
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  CHARTS
+        // ═══════════════════════════════════════════════════════════
+
+        const chartDefaults = {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: false,
+            plugins: { legend: { display: false } },
+            elements: { point: { radius: 0 } },
+            scales: {
+                x: {
+                    ticks: { color: '#64748b', maxTicksLimit: 8, font: { size: 10 } },
+                    grid: { color: 'rgba(0,0,0,0.06)' },
+                },
+                y: {
+                    ticks: { color: '#64748b', font: { size: 10 }, maxTicksLimit: 6 },
+                    grid: { color: 'rgba(0,0,0,0.06)' },
+                }
+            }
+        };
+
+        let lossData = [], emptyData = [], relevantData = [], spikeDeltaSeries = [], stepLabels = [];
+
+        // ── Loss chart ──
+        const lossCtx = document.getElementById('lossChart').getContext('2d');
+        const lossChart = new Chart(lossCtx, {
+            type: 'line',
+            data: {
+                labels: stepLabels,
+                datasets: [{
+                    data: lossData,
+                    borderColor: '#ef4444',
+                    backgroundColor: 'rgba(239,68,68,0.08)',
+                    fill: true,
+                    borderWidth: 1.5,
+                    tension: 0.3,
+                }]
+            },
+            options: {
+                ...chartDefaults,
+                plugins: {
+                    legend: { display: false },
+                    annotation: {}
+                },
+                scales: {
+                    ...chartDefaults.scales,
+                    y: { ...chartDefaults.scales.y, beginAtZero: true },
+                }
+            }
+        });
+
+        // ── Influence chart (also shows spike delta) ──
+        const infCtx = document.getElementById('influenceChart').getContext('2d');
+        const infChart = new Chart(infCtx, {
+            type: 'line',
+            data: {
+                labels: stepLabels,
+                datasets: [
+                    {
+                        label: 'Empty |W1|',
+                        data: emptyData,
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239,68,68,0.06)',
+                        fill: true,
+                        borderWidth: 1.5,
+                        tension: 0.3,
+                    },
+                    {
+                        label: 'Relevant |W1|',
+                        data: relevantData,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16,185,129,0.06)',
+                        fill: true,
+                        borderWidth: 1.5,
+                        tension: 0.3,
+                    },
+                    {
+                        label: 'Spike Δ',
+                        data: spikeDeltaSeries,
+                        borderColor: '#f97316',
+                        backgroundColor: 'rgba(249,115,22,0.10)',
+                        fill: false,
+                        borderWidth: 2,
+                        borderDash: [5, 3],
+                        tension: 0.2,
+                        pointRadius: 0,
+                    }
+                ]
+            },
+            options: {
+                ...chartDefaults,
+                plugins: { legend: { display: false } },
+                scales: {
+                    ...chartDefaults.scales,
+                    y: { ...chartDefaults.scales.y, beginAtZero: true },
+                }
+            }
+        });
+
+        // ═══════════════════════════════════════════════════════════
+        //  WEIGHT HEATMAP GRIDS
+        // ═══════════════════════════════════════════════════════════
+
+        function heatColor(val) {
+            const v = Math.max(-3, Math.min(3, val));
+            if (v >= 0) {
+                const t = v / 3;
+                return { bg: `rgba(5,150,105,${0.08 + t * 0.55})`, fg: t > 0.4 ? '#065f46' : '#64748b' };
+            } else {
+                const t = -v / 3;
+                return { bg: `rgba(99,102,241,${0.08 + t * 0.55})`, fg: t > 0.4 ? '#3730a3' : '#64748b' };
+            }
+        }
+
+        function renderWeightGrid(containerId, W, emptyCol) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            const cols = W[0].length;
+            container.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            for (let i = 0; i < W.length; i++) {
+                for (let j = 0; j < W[i].length; j++) {
+                    const v = W[i][j];
+                    const cell = document.createElement('div');
+                    cell.className = 'w-cell';
+                    const isE = (emptyCol !== null && j === emptyCol);
+                    if (isE) {
+                        const mag = Math.min(Math.abs(v), 3) / 3;
+                        cell.style.background = `rgba(220,38,38,${0.07 + mag * 0.45})`;
+                        cell.style.color = mag > 0.3 ? '#7f1d1d' : '#64748b';
+                        cell.style.border = '1px solid rgba(220,38,38,0.25)';
+                    } else {
+                        const { bg, fg } = heatColor(v);
+                        cell.style.background = bg;
+                        cell.style.color = fg;
+                    }
+                    cell.textContent = v.toFixed(3);
+                    container.appendChild(cell);
+                }
+            }
+        }
+
+        function updateHeatmaps() {
+            renderWeightGrid('w1grid', W1, 1);   // column 1 = empty input
+            renderWeightGrid('w2grid', W2, null);
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  METRICS
+        // ═══════════════════════════════════════════════════════════
+
+        function updateMetrics(loss) {
+            const ei = emptyInfluence();
+            const ri = relevantInfluence();
+            const snr = ri / (ei + 0.0001);
+
+            document.getElementById('mLoss').textContent = loss.toFixed(4);
+            document.getElementById('mEmpty').textContent = ei.toFixed(4);
+            document.getElementById('mRelevant').textContent = ri.toFixed(4);
+            document.getElementById('mSNR').textContent = snr.toFixed(2) + 'x';
+            document.getElementById('stepCounter').textContent = `Step: ${currentStep} / ${MAX_STEPS}`;
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  SIMULATION LOOP
+        // ═══════════════════════════════════════════════════════════
+
+        let lastResult = { loss: 0, x: [0, 0, 0], h: [0, 0, 0], out: [0, 0] };
+
+        function doSteps(n) {
+            for (let k = 0; k < n; k++) {
+                if (currentStep >= MAX_STEPS) {
+                    stopTraining();
+                    return;
+                }
+                currentStep++;
+
+                // Spike logic: inject SPIKE_VAL into x₁ when active
+                const x1 = spikeStepsLeft > 0 ? SPIKE_VAL : 0;
+                if (spikeStepsLeft > 0) spikeStepsLeft--;
+
+                const { loss, x, h } = trainStep(x1);
+                const { out } = forward(x);
+                lastResult = { loss, x, h, out };
+
+                const spikeDelta = computeSpikeImpact();
+                lossData.push(+loss.toFixed(5));
+                emptyData.push(+emptyInfluence().toFixed(5));
+                relevantData.push(+relevantInfluence().toFixed(5));
+                spikeDeltaSeries.push(+spikeDelta.toFixed(5));
+                stepLabels.push(currentStep);
+
+                updateSpikeUI(spikeDelta);
+            }
+
+            lossChart.update();
+            infChart.update();
+            updateNetwork(lastResult.x, lastResult.h, lastResult.out);
+            updateHeatmaps();
+            updateMetrics(lastResult.loss);
+        }
+
+        function updateSpikeUI(spikeDelta) {
+            // Metric card
+            document.getElementById('mSpikeDelta').textContent = spikeDelta.toFixed(4);
+
+            const bar = document.getElementById('spikeBar');
+            const fill = document.getElementById('spikeProgressFill');
+            const cdEl = document.getElementById('spikeCountdown');
+            const btnSpike = document.getElementById('btnSpike');
+
+            if (spikeStepsLeft > 0) {
+                bar.classList.add('visible');
+                btnSpike.classList.add('active');
+                const pct = (spikeStepsLeft / SPIKE_DURATION) * 100;
+                fill.style.width = pct + '%';
+                cdEl.textContent = spikeStepsLeft;
+
+                // Pulse the empty node in SVG
+                const emptyNodeEl = nodeEls.find(n => n.isEmpty);
+                if (emptyNodeEl) {
+                    emptyNodeEl.circle.setAttribute('fill', '#fca5a5');
+                    emptyNodeEl.valText.textContent = SPIKE_VAL.toFixed(2);
+                }
+            } else {
+                bar.classList.remove('visible');
+                btnSpike.classList.remove('active');
+                // Restore empty node
+                const emptyNodeEl = nodeEls.find(n => n.isEmpty);
+                if (emptyNodeEl) {
+                    emptyNodeEl.circle.setAttribute('fill', '#fee2e2');
+                    emptyNodeEl.valText.textContent = '0.00';
+                }
+            }
+        }
+
+        function stopTraining() {
+            clearInterval(trainingInterval);
+            trainingInterval = null;
+            btnRun.disabled = false;
+            btnStep.disabled = false;
+            btnPause.disabled = true;
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  CONTROLS
+        // ═══════════════════════════════════════════════════════════
+
+        const btnRun = document.getElementById('btnRun');
+        const btnStep = document.getElementById('btnStep');
+        const btnPause = document.getElementById('btnPause');
+        const btnReset = document.getElementById('btnReset');
+        const btnSpike = document.getElementById('btnSpike');
+        const slider = document.getElementById('speedSlider');
+        const speedLbl = document.getElementById('speedLabel');
+
+        let intervalMs = 80;
+
+        slider.addEventListener('input', () => {
+            intervalMs = +slider.value;
+            speedLbl.textContent = intervalMs + 'ms';
+            if (trainingInterval) {
+                clearInterval(trainingInterval);
+                trainingInterval = setInterval(() => doSteps(1), intervalMs);
+            }
+        });
+
+        btnRun.addEventListener('click', () => {
+            if (trainingInterval) return;
+            btnRun.disabled = true;
+            btnStep.disabled = true;
+            btnPause.disabled = false;
+            trainingInterval = setInterval(() => doSteps(1), intervalMs);
+        });
+
+        btnStep.addEventListener('click', () => {
+            if (trainingInterval) return;
+            doSteps(10);
+        });
+
+        btnPause.addEventListener('click', () => {
+            clearInterval(trainingInterval);
+            trainingInterval = null;
+            btnRun.disabled = false;
+            btnStep.disabled = false;
+            btnPause.disabled = true;
+        });
+
+        btnReset.addEventListener('click', () => {
+            stopTraining();
+            currentStep = 0;
+            spikeStepsLeft = 0;
+            initWeights();
+
+            lossData.length = 0;
+            emptyData.length = 0;
+            relevantData.length = 0;
+            spikeDeltaSeries.length = 0;
+            stepLabels.length = 0;
+            spikeEventMarkers.length = 0;
+
+            lossChart.update();
+            infChart.update();
+            buildNetwork();
+            updateNetwork([0, 0, 0], [0, 0, 0], [0, 0]);
+            updateHeatmaps();
+            updateMetrics(0);
+
+            btnRun.disabled = false;
+            btnStep.disabled = false;
+            btnPause.disabled = true;
+            btnSpike.classList.remove('active');
+            document.getElementById('spikeBar').classList.remove('visible');
+            document.getElementById('stepCounter').textContent = `Step: 0 / ${MAX_STEPS}`;
+            document.getElementById('mLoss').textContent = '—';
+            document.getElementById('mEmpty').textContent = '—';
+            document.getElementById('mRelevant').textContent = '—';
+            document.getElementById('mSNR').textContent = '—';
+            document.getElementById('mSpikeDelta').textContent = '—';
+        });
+
+        btnSpike.addEventListener('click', () => {
+            spikeStepsLeft = SPIKE_DURATION;
+            spikeEventMarkers.push(currentStep);
+            document.getElementById('spikeValDisplay').textContent = SPIKE_VAL.toFixed(1);
+            document.getElementById('spikeBar').classList.add('visible');
+            btnSpike.classList.add('active');
+            // Immediately show spike impact
+            const delta = computeSpikeImpact();
+            document.getElementById('mSpikeDelta').textContent = delta.toFixed(4);
+            // Flash the empty node
+            const emptyNodeEl = nodeEls.find(n => n.isEmpty);
+            if (emptyNodeEl) {
+                emptyNodeEl.circle.setAttribute('fill', '#fca5a5');
+                emptyNodeEl.valText.textContent = SPIKE_VAL.toFixed(2);
+            }
+        });
+
+        // ═══════════════════════════════════════════════════════════
+        //  INIT
+        // ═══════════════════════════════════════════════════════════
+
+        currentStep = 0;
+        spikeStepsLeft = 0;
+        trainingInterval = null;
+        initWeights();
+        buildNetwork();
+        updateNetwork([0, 0, 0], [0, 0, 0], [0, 0]);
+        updateHeatmaps();
+        updateSpikeUI(0);
+    </script>
+</body>
+
+</html>
