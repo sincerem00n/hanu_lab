@@ -236,19 +236,84 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
             obs, _, dones, _ = env.step(actions)
             policy_nn.reset(dones)
 
+        # ── ONE-SHOT: print action-index → joint-name mapping ─────────────────
+        if timestep == 0:
+            base_env = env.unwrapped
+            _action_joint_names: list[str] = []
+            try:
+                # IsaacLab ManagerBasedRLEnv exposes action_manager
+                am = base_env.action_manager
+                # Each ActionTerm stores the joints it controls; collect in order
+                for term_name, term in am._terms.items():
+                    if hasattr(term, "_asset") and hasattr(term._asset, "joint_names"):
+                        # joint_indices gives the columns this term maps to in the full
+                        # articulation joint array; use them to look up ordered names.
+                        if hasattr(term, "_joint_ids"):
+                            jnames = [term._asset.joint_names[i] for i in term._joint_ids]
+                        elif hasattr(term, "joint_names"):
+                            jnames = list(term.joint_names)
+                        else:
+                            jnames = [f"{term_name}[{k}]"
+                                      for k in range(term.action_dim)]
+                    else:
+                        jnames = [f"{term_name}[{k}]"
+                                  for k in range(term.action_dim)]
+                    _action_joint_names.extend(jnames)
+            except Exception as _e:
+                print(f"[DBG] action_manager joint-name lookup failed: {_e}")
+                # Fallback: read directly from the robot articulation
+                try:
+                    robot = base_env.scene["robot"]
+                    _action_joint_names = list(robot.joint_names)
+                except Exception as _e2:
+                    print(f"[DBG] robot.joint_names fallback also failed: {_e2}")
+
+            print("\n========== ACTION → JOINT NAME MAP ==========")
+            for idx, jname in enumerate(_action_joint_names):
+                print(f"  action[{idx:2d}]  →  {jname}")
+            print(f"  total action dims = {len(_action_joint_names)}")
+            print("=============================================\n", flush=True)
+
         # -------------------------------
         # DEBUG: print command + velocities (every 200 steps)
         # -------------------------------
         if timestep % 200 == 0:
             base_env = env.unwrapped
 
-            # --- action RPM check ---
+            # --- action values labelled by joint name (env 0) ---
             import math
             RPM_LIMIT = 6.0
             actions_np = actions[0].cpu().tolist()  # env 0
             actions_rpm = [a * 60.0 / (2 * math.pi) for a in actions_np]
             exceeded = [(i, rpm) for i, rpm in enumerate(actions_rpm) if abs(rpm) > RPM_LIMIT]
-            print(f"[DBG] step={timestep}  actions_rpm env0: {[f'{r:.2f}' for r in actions_rpm]}")
+
+            # Print joint-name labelled actions
+            try:
+                robot = base_env.scene["robot"]
+                # Try to get the ordered joint names for the action space
+                am = base_env.action_manager
+                _jnames_per_step: list[str] = []
+                for term in am._terms.values():
+                    if hasattr(term, "_asset") and hasattr(term, "_joint_ids"):
+                        _jnames_per_step.extend(
+                            [term._asset.joint_names[i] for i in term._joint_ids]
+                        )
+                    elif hasattr(term, "joint_names"):
+                        _jnames_per_step.extend(list(term.joint_names))
+                    else:
+                        _jnames_per_step.extend(
+                            [f"?[{k}]" for k in range(term.action_dim)]
+                        )
+                jlabels = _jnames_per_step if _jnames_per_step else [str(i) for i in range(len(actions_np))]
+            except Exception:
+                jlabels = [str(i) for i in range(len(actions_np))]
+
+            print(f"[DBG] step={timestep}  actions (env0):")
+            for idx, (val, rpm, jname) in enumerate(
+                zip(actions_np, actions_rpm, jlabels)
+            ):
+                flag = " *** RPM EXCEEDED ***" if abs(rpm) > RPM_LIMIT else ""
+                print(f"       [{idx:2d}] {jname:40s}  val={val:7.4f}  rpm={rpm:7.2f}{flag}")
             if exceeded:
                 print(f"[DBG] *** EXCEEDS {RPM_LIMIT} RPM *** joints: {[(i, f'{r:.2f}') for i, r in exceeded]}")
             # ------------------------
