@@ -175,3 +175,41 @@ def target_joint_positions(
 
     # ---- 6. Return only the joints requested by asset_cfg ------------------
     return ref_q[:, asset_cfg.joint_ids]
+
+
+# ---------------------------------------------------------------------------
+# Zero-padding functions for future observation terms
+# ---------------------------------------------------------------------------
+
+GAIT_PHASE_DIM = 2  # Example: [sin(phase), cos(phase)]
+TARGET_Q_DIM = 23   # Example: 12 DoF humanoid joints
+ACTION_HISTORY_DIM = 12 * 8 # Example: 12 actions * history length of 8
+
+def zero_gait_phase(env: ManagerBasedRLEnv) -> torch.Tensor:
+    """Returns a zero tensor matching the shape of the future gait_phase observation."""
+    return torch.zeros((env.num_envs, GAIT_PHASE_DIM), device=env.device, dtype=torch.float32)
+
+def zero_target_q(env: ManagerBasedRLEnv) -> torch.Tensor:
+    """Returns a zero tensor matching the shape of the future target_q observation."""
+    return torch.zeros((env.num_envs, TARGET_Q_DIM), device=env.device, dtype=torch.float32)
+
+def padded_action_history(env: ManagerBasedRLEnv) -> torch.Tensor:
+    """
+    Returns an action history tensor where the most recent action is real, 
+    and the remaining historical steps are zero-padded to reserve space.
+
+    Note: use this instead of normal 'actions'
+    """
+    # 1. Get the most recent action (t-1)
+    last_action = env.action_manager.action  # Shape: (num_envs, action_dim)
+    
+    # 2. Calculate the padding size
+    action_dim = last_action.shape[1]
+    history_length = 8
+    padding_dim = action_dim * (history_length - 1) # Space for the 7 older actions
+    
+    # 3. Create zero-padding for the older history
+    zero_padding = torch.zeros((env.num_envs, padding_dim), device=env.device, dtype=torch.float32)
+    
+    # 4. Concatenate: [last_action, 0, 0, 0, 0, 0, 0, 0]
+    return torch.cat([last_action, zero_padding], dim=-1)

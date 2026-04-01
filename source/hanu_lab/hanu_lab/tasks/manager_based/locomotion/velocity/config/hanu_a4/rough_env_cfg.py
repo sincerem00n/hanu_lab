@@ -5,7 +5,10 @@
 from __future__ import annotations
 import math
 
+from torch import func
+
 # import isaacsim.asset.importer.urdf
+from hanu_lab.tasks.manager_based.locomotion.velocity.mdp.observation import zero_gait_phase
 import omni.usd
 from pxr import UsdPhysics
 
@@ -17,12 +20,14 @@ from hanu_lab.assets import HANU_A4_CFG, HANU_A4_IM_CFG, HANU_A4_TEST_CFG, HANU_
 from isaaclab.managers import RewardTermCfg as RewTerm
 from isaaclab.managers import TerminationTermCfg as DoneTerm
 from isaaclab.managers import EventTermCfg as EventTerm
+from isaaclab.managers import ObservationTermCfg as ObsTerm
+from isaaclab.managers import ObservationGroupCfg as ObsGroup
 from isaaclab.managers import SceneEntityCfg
 from isaaclab.utils import configclass
 from isaaclab.utils.noise import AdditiveUniformNoiseCfg as Unoise
 
 import hanu_lab.tasks.manager_based.locomotion.velocity.mdp as mdp
-from hanu_lab.tasks.manager_based.locomotion.velocity.velocity_env_cfg import LocomotionVelocityRoughEnvCfg, RewardsCfg, TerminationsCfg, CommandsCfg, EventCfg
+from hanu_lab.tasks.manager_based.locomotion.velocity.velocity_env_cfg import LocomotionVelocityRoughEnvCfg, RewardsCfg, TerminationsCfg, CommandsCfg, EventCfg, ObservationsCfg
 
 
 
@@ -940,6 +945,7 @@ class HanuA4RoughEnvCfgV4(HanuA4RoughEnvCfg):
         super().__post_init__()
 
         self.scene.robot = HANU_A4_N_BASE_CFG.replace(prim_path="{ENV_REGEX_NS}/robot")
+        self.scene.imu_sensor = None
 
         # ==========================================================
         # OBSERVATIONS CONFIGURATION
@@ -953,6 +959,14 @@ class HanuA4RoughEnvCfgV4(HanuA4RoughEnvCfg):
         self.observations.policy.height_scan = None
         self.observations.policy.gait_phase = None
         self.observations.policy.target_q = None
+
+        self.observations.policy.imu_ang_vel = None
+        self.observations.policy.imu_lin_acc = None
+        self.observations.critic.imu_ang_vel = None
+        self.observations.critic.imu_lin_acc = None
+
+        self.observations.policy.actions.history_length = 0
+        self.observations.critic.actions.history_length = 0
 
         # ==========================================================
         # ACTIONS CONFIGURATION
@@ -1136,14 +1150,20 @@ class HanuA4RoughEnvCfgV5(HanuA4RoughEnvCfg):
         self.rewards.ang_vel_xy_l2.weight = -0.3
 
         # ------------------------------------------
-        self.rewards.feet_air_time.weight = 0.5
-        self.rewards.feet_air_time.params["threshold"] = 0.4
+        # self.rewards.feet_air_time.weight = 0.5
+        # self.rewards.feet_air_time.params["threshold"] = 0.4
 
-        self.rewards.feet_air_time_penalty.weight = -0.01
-        self.rewards.feet_air_time_penalty.params["threshold"] = 0.38
+        # self.rewards.feet_air_time_penalty.weight = -0.01
+        # self.rewards.feet_air_time_penalty.params["threshold"] = 0.38
+
+        # self.rewards.feet_slide.weight = -0.07
+
+        # self.rewards.feet_step_sequence.weight = 0.1
         # ------------------------------------------
-        # self.rewards.feet_air_time = None
-        # self.rewards.feet_air_time_penalty = None
+        self.rewards.feet_air_time = None
+        self.rewards.feet_air_time_penalty = None
+        self.rewards.feet_slide = None
+        self.rewards.feet_step_sequence = None
 
         self.rewards.feet_lateral_sep_reward = None
         self.rewards.arms_away_from_body = None
@@ -1152,7 +1172,7 @@ class HanuA4RoughEnvCfgV5(HanuA4RoughEnvCfg):
         # self.rewards.arms_away_from_body.params["min_lateral_dist"] = 0.20
 
         # self.rewards.feet_slide = None
-        self.rewards.feet_slide.weight = -0.07
+
         self.rewards.feet_mirror = None
         # self.rewards.feet_mirror.weight = -0.02
 
@@ -1170,11 +1190,10 @@ class HanuA4RoughEnvCfgV5(HanuA4RoughEnvCfg):
         self.rewards.joint_deviation_neck.weight = -0.1
         self.rewards.joint_deviation_legs.weight = -0.3
 
-        self.rewards.feet_step_sequence.weight = 0.1
 
-        self.rewards.ref_joint_pos = None
-        self.rewards.ref_joint_vel = None
-        self.rewards.foot_pos_tracking = None
+        # self.rewards.ref_joint_pos = None
+        # self.rewards.ref_joint_vel = None
+        # self.rewards.foot_pos_tracking = None
 
         # --- Termination penalty ---
         self.rewards.termination_penalty.weight = -200.0
@@ -1304,6 +1323,337 @@ class HanuA4RoughEnvCfgV6(HanuA4RoughEnvCfg):
         self.rewards.joint_deviation_legs.weight = -0.3
 
         self.rewards.feet_step_sequence = None
+
+        self.rewards.ref_joint_pos = None
+        self.rewards.ref_joint_vel = None
+        self.rewards.foot_pos_tracking = None
+
+        # --- Termination penalty ---
+        self.rewards.termination_penalty.weight = -200.0
+
+        # ==========================================================
+        # TERMINATIONS CONFIGURATION
+        # ==========================================================
+        self.terminations.base_contact.params["sensor_cfg"].body_names = [
+            f"^(?!.*{self.foot_link_name}).*"
+        ]
+
+
+# @configclass
+# class HanuA4ObservationsCfgV7(ObservationsCfg):
+#     """ buffer for later phase """
+#     gait_phase = ObsTerm(
+#         func=mdp.zero_gait_phase,
+#     )
+#     target_q = ObsTerm(
+#         func=mdp.zero_gait_phase,
+#     )
+    
+#     action_pad = ObsTerm(
+#         func=mdp.padded_action_history,
+#     )
+    
+    
+@configclass
+class HanuA4ObservationsCfgV7:
+    """Observation specifications for the MDP. add buffer for later phasee"""
+
+    @configclass
+    class PolicyCfg(ObsGroup):
+        """Observations for policy group."""
+
+        # observation terms (order preserved)
+        # base_lin_vel = ObsTerm(
+        #     func=mdp.base_lin_vel,
+        #     noise=Unoise(n_min=-0.1, n_max=0.1), 
+        #     clip=(-100.00, 100.00),
+        #     scale=1.0,
+        # )
+        base_ang_vel = ObsTerm(
+            func=mdp.base_ang_vel,
+            noise=Unoise(n_min=-0.2, n_max=0.2),
+            clip=(-100.0, 100.0),
+            scale=1.0,
+        )
+        # imu_lin_acc = ObsTerm(
+        #     func=mdp.imu_lin_acc,
+        #     params={"asset_cfg": SceneEntityCfg("imu_sensor")},
+        #     noise=Unoise(n_min=-0.1, n_max=0.1),
+        # )
+        # imu_ang_vel = ObsTerm(
+        #     func=mdp.imu_ang_vel,
+        #     params={"asset_cfg": SceneEntityCfg("imu_sensor")},
+        #     noise=Unoise(n_min=-0.2, n_max=0.2),
+        # )
+        projected_gravity = ObsTerm(
+            func=mdp.projected_gravity,
+            noise=Unoise(n_min=-0.05, n_max=0.05),
+            clip=(-100.0, 100.0),
+            scale=1.0,
+        )
+        velocity_commands = ObsTerm(
+            func=mdp.generated_commands, 
+            params={"command_name": "base_velocity"},
+            clip=(-100.0, 100.0),
+            scale=1.0,
+        )
+        joint_pos = ObsTerm(
+            func=mdp.joint_pos_rel,
+            params={"asset_cfg": SceneEntityCfg("robot", joint_names=".*", preserve_order=True)},
+            noise=Unoise(n_min=-0.01, n_max=0.01),
+            clip=(-100.0, 100.0),
+            scale=1.0, 
+        )
+        joint_vel = ObsTerm(
+            func=mdp.joint_vel_rel,
+            params={"asset_cfg": SceneEntityCfg("robot", joint_names=".*", preserve_order=True)},
+            noise=Unoise(n_min=-1.5, n_max=1.5),
+            clip=(-100.0, 100.0),
+            scale=1.0,
+        )
+        # actions = ObsTerm(
+        #     func=mdp.last_action,
+        #     clip=(-100.0, 100.0),
+        #     scale=1.0,
+        #     history_length=8,
+        #     flatten_history_dim=True,
+        # )
+        action_pad = ObsTerm(
+            func=mdp.padded_action_history,
+        )
+
+        height_scan = ObsTerm(
+            func=mdp.height_scan,
+            params={"sensor_cfg": SceneEntityCfg("height_scanner")},
+            noise=Unoise(n_min=-0.1, n_max=0.1),
+            clip=(-100.0, 100.0),   
+        )
+
+        gait_phase = ObsTerm(
+            func=mdp.gait_phase_sin_cos,
+            params={
+                "cycle_time": 1.0,
+            }
+        )
+        target_q = ObsTerm(
+            func=mdp.target_joint_positions,
+            params={
+                "time_offset": 0.0,
+            },
+        )
+
+        def __post_init__(self):
+            self.enable_corruption = True
+            self.concatenate_terms = True
+    
+    @configclass
+    class CriticCfg(ObsGroup):
+        """Observations for critic group"""
+
+        # observation terms (order preserved)
+        base_lin_vel = ObsTerm(
+            func=mdp.base_lin_vel, 
+            clip=(-100.00, 100.00),
+            scale=1.0,
+        )
+        base_ang_vel = ObsTerm(
+            func=mdp.base_ang_vel,
+            clip=(-100.0, 100.0),
+            scale=1.0,
+        )
+        # imu_lin_acc = ObsTerm(
+        #     func=mdp.imu_lin_acc,
+        #     params={"asset_cfg": SceneEntityCfg("imu_sensor")},
+        #     noise=Unoise(n_min=-0.1, n_max=0.1),
+        # )
+        # imu_ang_vel = ObsTerm(
+        #     func=mdp.imu_ang_vel,
+        #     params={"asset_cfg": SceneEntityCfg("imu_sensor")},
+        #     noise=Unoise(n_min=-0.2, n_max=0.2),
+        # )
+        projected_gravity = ObsTerm(
+            func=mdp.projected_gravity,
+            clip=(-100.0, 100.0),
+            scale=1.0,
+        )
+        velocity_commands = ObsTerm(
+            func=mdp.generated_commands, 
+            params={"command_name": "base_velocity"},
+            clip=(-100.0, 100.0),
+            scale=1.0,
+        )
+        joint_pos = ObsTerm(
+            func=mdp.joint_pos_rel,
+            params={"asset_cfg": SceneEntityCfg("robot", joint_names=".*", preserve_order=True)},
+            clip=(-100.0, 100.0),
+            scale=1.0, 
+        )
+        joint_vel = ObsTerm(
+            func=mdp.joint_vel_rel,
+           params={"asset_cfg": SceneEntityCfg("robot", joint_names=".*", preserve_order=True)},
+            clip=(-100.0, 100.0),
+            scale=1.0,
+        )
+        # actions = ObsTerm(
+        #     func=mdp.last_action,
+        #     clip=(-100.0, 100.0),
+        #     scale=1.0,
+        #     history_length=8,
+        #     flatten_history_dim=True,
+        # )
+        action_pad = ObsTerm(
+            func=mdp.padded_action_history,
+        )
+        height_scan = ObsTerm(
+            func=mdp.height_scan,
+            params={"sensor_cfg": SceneEntityCfg("height_scanner")},
+            clip=(-100.0, 100.0),
+        )
+
+        gait_phase = ObsTerm(
+            func=mdp.gait_phase_sin_cos,
+            params={
+                "cycle_time": 1.0,
+            }
+        )
+        target_q = ObsTerm(
+            func=mdp.target_joint_positions,
+            params={
+                "time_offset": 0.0,
+            },
+        )
+
+        def __post_init__(self):
+            self.enable_corruption = False
+            self.concatenate_terms = True
+
+    # observation groups
+    policy: PolicyCfg = PolicyCfg()
+    critic: CriticCfg = CriticCfg()
+         
+
+
+
+@configclass
+class HanuA4RoughEnvCfgV7(HanuA4RoughEnvCfg):
+    """Configuration for the rough environment in the RAI Hanumanoid project. -- New baseline with buffers"""
+
+    observations: HanuA4ObservationsCfgV7 = HanuA4ObservationsCfgV7()
+
+    def __post_init__(self):
+        super().__post_init__()
+
+        self.scene.robot = HANU_A4_N_BASE_CFG.replace(prim_path="{ENV_REGEX_NS}/robot")
+        self.scene.imu_sensor = None
+
+        # ==========================================================
+        # OBSERVATIONS CONFIGURATION
+        # ==========================================================
+        # Scale observations for stable learning
+        # self.observations.policy.base_lin_vel.scale = 2.0
+        self.observations.policy.base_ang_vel.scale = 0.25
+        self.observations.policy.joint_pos.scale = 1.0
+        self.observations.policy.joint_vel.scale = 0.05
+
+        # self.observations.policy.height_scan = None
+        # self.observations.policy.gait_phase = None
+        # self.observations.policy.target_q = None
+
+        # self.observations.policy.imu_ang_vel = None
+        # self.observations.policy.imu_lin_acc = None
+        # self.observations.critic.imu_ang_vel = None
+        # self.observations.critic.imu_lin_acc = None
+
+        # self.observations.policy.actions.history_length = 0
+        # self.observations.critic.actions.history_length = 0
+
+        # self.observations.policy.actions = None
+        # self.observations.critic.actions = None
+
+        # ==========================================================
+        # ACTIONS CONFIGURATION
+        # ==========================================================
+        self.actions.joint_pos.scale = 0.25
+        self.actions.joint_pos.clip = {".*": (-100.0, 100.0)}
+
+        # ==========================================================
+        # EVENTS / DOMAIN RANDOMIZATION
+        # ==========================================================
+        self.events.add_base_mass.params["asset_cfg"].body_names = "base_.*"
+        self.events.add_base_mass.params["mass_distribution_params"] = (-0.5, 0.15)
+
+        self.events.base_com = None
+        self.events.base_external_force_torque = None
+
+        # Randomize joint reset slightly
+        self.events.reset_robot_joints.params["position_range"] = (0.5, 1.5)
+        self.events.reset_base.params = {
+            "pose_range": {"x": (-0.5, 0.5), "y": (-0.5, 0.5), "yaw": (-3.14, 3.14)},
+            "velocity_range": {
+                "x": (-0.5, 0.5),
+                "y": (-0.5, 0.5),
+                "z": (-0.5, 0.5),
+                "roll": (-0.5, 0.5),
+                "pitch": (-0.5, 0.5),
+                "yaw": (-0.5, 0.5),
+            },
+        }
+
+        # ==========================================================
+        # COMMANDS CONFIGURATION
+        # ==========================================================
+        self.commands.base_velocity.ranges.lin_vel_x = (0.0, 0.0)
+        self.commands.base_velocity.ranges.lin_vel_y = (0.0, 0.5)  # (-1.0, 0.0)
+        self.commands.base_velocity.ranges.ang_vel_z = (0.0, 0.0)
+
+        self.commands.base_velocity.rel_standing_envs = 0.02
+
+        # ==========================================================
+        # REWARDS CONFIGURATION
+        # ==========================================================
+        self.rewards.track_lin_vel_xy_exp.weight = 2.0
+        self.rewards.track_ang_vel_z_exp.weight = 0.5
+        self.rewards.flat_orientation_l2 = None
+        self.rewards.upright_orientation.weight = 2.0
+        self.rewards.lin_vel_z_l2.weight = -0.5
+        self.rewards.ang_vel_xy_l2.weight = -0.3
+
+        # ------------------------------------------
+        self.rewards.feet_air_time.weight = 0.5
+        self.rewards.feet_air_time.params["threshold"] = 0.4
+
+        self.rewards.feet_air_time_penalty.weight = -0.01
+        self.rewards.feet_air_time_penalty.params["threshold"] = 0.38
+        # ------------------------------------------
+        # self.rewards.feet_air_time = None
+        # self.rewards.feet_air_time_penalty = None
+
+        self.rewards.feet_lateral_sep_reward = None
+        self.rewards.arms_away_from_body = None
+        # self.rewards.feet_lateral_sep_reward.weight = 0.15
+        # self.rewards.arms_away_from_body.weight = 0.30
+        # self.rewards.arms_away_from_body.params["min_lateral_dist"] = 0.20
+
+        # self.rewards.feet_slide = None
+        self.rewards.feet_slide.weight = -0.07
+        self.rewards.feet_mirror = None
+        # self.rewards.feet_mirror.weight = -0.02
+
+        self.rewards.action_rate_l2.weight = -0.005
+        # self.rewards.dof_acc_l2 = None
+        self.rewards.dof_torques_l2.weight = -5.0e-7
+        self.rewards.joint_vel_legs.weight = -0.2
+        self.rewards.joint_vel_neck.weight = -0.25
+        self.rewards.joint_vel_arms.weight = -0.1
+
+        self.rewards.ankle_dof_pos_limits.weight = 0.0
+        # self.rewards.knee_pose_deviation.weight = -0.0
+        # self.rewards.knee_dof_pos_limits.weight = -0.0
+        self.rewards.joint_deviation_arms.weight = -0.2
+        self.rewards.joint_deviation_neck.weight = -0.1
+        self.rewards.joint_deviation_legs.weight = -0.3
+
+        self.rewards.feet_step_sequence.weight = 0.1
 
         self.rewards.ref_joint_pos = None
         self.rewards.ref_joint_vel = None
